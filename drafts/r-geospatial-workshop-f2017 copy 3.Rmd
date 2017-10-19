@@ -750,19 +750,6 @@ WGS84_CRS <- CRS(proj4string(cheap_good))
 sf_lonlat <- spTransform(sfboundary, WGS84_CRS)
 ```
 
-## Save the shapefile
-
-Use writeOGR to save `sf_lonlat` to a new shapefile
-
-See `?writeOGR` for help
-```{r, eval=F}
-# write transformed data to a new shapefile 
-writeOGR(sf_lonlat, dsn = "data", layer =  "sf_bounary_geo", driver="ESRI Shapefile")
-
-# is it there?
-dir("data")
-```
-
 ## Projections, CRS, oh my!
 
 We want all data in the same CRS
@@ -1453,10 +1440,9 @@ Make a graduted color map of SF Airbnb rentals (cheap_good)
 - overlay the rentals on top of the boundary of sf and the sf streets
 
 Make an interacive map
-- add a popup that includes the name, price and URL (and more if desired)
-- url text should be
+- add a popup
 
-## Solution 1. Static Map
+## Solution
 
 ```{r}
 tm_shape(sf_lonlat) + tm_polygons(col="beige", border.col = "blue") + 
@@ -1466,17 +1452,17 @@ tm_shape(cheap_good) + tm_symbols(col="red", size = 0.5, alpha=0.5, style="jenks
 
 ```
 
-## Solution 2. Interactive Map
+
+## Does this work?
+
+If yes, what does it tell you?
 
 ```{r}
-tm_shape(sf_lonlat) + tm_polygons(col="beige", border.col = "blue") + 
-tm_shape(sf_streets) + tm_lines(col="black", lwd = 3) +
-tm_shape(sf_streets) + tm_lines(col="white", lwd = 1) +
-tm_shape(cheap_good) + tm_symbols(col="red", size = 0.5, alpha=0.5, style="jenks", popup.vars=c("name","price","listing_url"))
 
-tmap_mode("view")
+tm_shape(sfboundary) + tm_polygons(col="beige") + 
+tm_shape(cheap_good) + tm_symbols(col="red")
+
 ```
-
 
 # Category Maps
 
@@ -1491,8 +1477,300 @@ tm_shape(cheap_good) +
   tm_symbols(shape="property_type")
 ```
 
-  
- 
+# Mapping Quantitative Data
+
+Using color and size to convey data values
+
+
+## Proportional Symbol Maps
+```{r}
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(size="price")
+```
+
+## Challenge
+
+Redo that map
+- set background color to transparent
+- set legend title to Price per Night
+
+##
+```{r}
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(size="price", title.size = "Price per Night", alpha = 0)
+```
+
+
+## Proportional Color Maps
+```{r}
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(col="price")
+```
+
+
+## Critique
+
+What worked?
+
+What didn't?
+
+How to improve?
+
+#---------------------------------------------------------------------------------------------
+
+
+
+
+```{r}
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(col="price", palette = "YlOrRd")
+
+```
+
+## Challenge
+
+1. Change the color palette to Blues and Purples (squential)
+
+2. Change the color palette to Spectral (divergent) using red for higher prices.
+
+Use `display.brewer.all` and the Examples in `?tm_symbols` for help
+
+Hint: you may need to set `auto.palette.mapping` for Spectral colors
+
+## Solution
+
+```{r, eval = F}
+
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(col="price", size=0.5, palette = "BuPU", auto.palette.mapping=FALSE)
+
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(col="price", size=0.5, palette = "-Spectral", auto.palette.mapping=FALSE)
+
+```
+
+
+## Order matters!
+
+Layers draw in the order that they are added to the map. 
+
+So, should it be
+
+- points, lines, polygons
+or
+- polygons, points lines
+
+## Order matters!
+
+Data will display on the map in the order it appears in the data frame.
+
+You can sort the data by a column value to control this.
+
+Question:
+Would you order ascending or descending to better see cheap rentals?
+
+## Draw Order
+
+```{r}
+# sort data frame by price
+cheap_good <- cheap_good[order(cheap_good$price, decreasing = TRUE),] 
+
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(col="price", size=0.5, palette = "-Spectral", auto.palette.mapping=FALSE)
+```
+
+
+
+
+
+
+
+```{r}
+tm_shape(sfboundary) + tm_polygons(col="white") + 
+tm_shape(cheap_good) + tm_symbols(size="price", style="quantile", border.col="red", alpha=0, title.col="Price per Night")
+```
+
+## Compare that to an unclassifed symbol map
+```{r}
+tm_shape(sfboundary) + tm_polygons(col="white") + 
+tm_shape(cheap_good) + tm_symbols(size="price", border.col="red", alpha=0, title.col="Price per Night", perceptual=T)
+```
+
+
+## Graduated Symbol Maps
+
+```{r}
+tm_shape(sfboundary) + tm_polygons(col="white") + 
+tm_shape(cheap_good) + tm_symbols(size="price", style="sd", border.col="red", alpha=0,  title.col="Price per Night")
+```
+
+## Challenge
+
+Try some other classification schemes for your graduated symbol map
+
+Note how the affect the display of the data
+
+# Graduated Color Maps
+
+Hold size constant and vary color to create a Graduated color map
+
+Choice of color palette is very important
+
+## Gradiated Color map
+```{r}
+
+tm_shape(sfboundary) + 
+  tm_polygons(col="#fbf9f1") + 
+tm_shape(cheap_good) + tm_symbols(col="price", style="jenks", size=.5, 
+      palette="Reds", auto.palette.mapping=F, 
+      border.alpha=0, alpha=0.75, title.col="Price per Night")
+```
+
+
+## Color and Classification method
+
+Try different classification methods
+
+Note how they change the 
+
+
+```{r}
+tm_shape(sfboundary) + 
+  tm_polygons(col="white") + 
+tm_shape(cheap_good) + tm_symbols(col="price", style="equal",size=.5, 
+      palette="Reds", auto.palette.mapping=F, 
+      border.alpha=0, alpha=0.75, title.col="Airbnb 2bd Price")
+```
+
+
+## Choropleth maps
+
+Color areas by data values
+
+The polygon version of the graduated color map
+
+## US Population by State
+
+# load it in and view it
+```{r}
+uspop <- readOGR("./data", "us_states_pop")
+plot(uspop)
+```
+
+# tmap customizations
+
+Add 
+- scalebar 
+- north arrow 
+
+
+
+
+## tm layout styles
+
+
+```{r}
+tm_shape(uspop) + tm_polygons() + tm_scale_bar(position=c("left","bottom")) + tm_compass() + tm_style_classic()
+```
+
+## Try another style
+
+Natural
+
+ALbatross
+
+Beaver
+
+etc...
+
+
+
+## What happened?
+
+
+
+# Map it with `tmap`
+
+```{r}
+tm_shape(uspop) + tm_polygons(col="POPULATION")
+```
+
+# Try a different class
+
+```{r}
+tm_shape(uspop) + tm_polygons(col="POPULATION", style="jenks")
+```
+
+## Notice anything odd about the shape of the USA?
+
+What's the CRS?
+
+Why might that matter?
+
+## Projection Transformation
+
+When larger areas are mapped using geographic coordinates the distortion becomes more noticeable.
+
+So these data are typically transformed to another CRS that better preserves shape.
+
+## USA Contiguous Albers Equal Area Conic, EPSG:5070
+
+The Albers equal area conic is the typical projection for historical USGS maps of the lower 48
+
+It being a general-purpose low-distortion compromise for mid-latitude short and wide extents
+
+Preserves relative shape
+
+## USA ALbers
+
+```{r}
+uspop_albers <- spTransform(uspop, CRS("+init=epsg:5070"))
+
+tm_shape(uspop_albers) + tm_polygons(col="POPULATION", style="jenks")
+```
+
+
+## Challenge
+
+Map population density instead of population
+
+## Discuss
+```{r, eval=F}
+
+tm_shape(uspop_albers) + tm_polygons(col="popdens", style="jenks")
+#vs
+tm_shape(uspop_albers) + tm_polygons(col="POPULATION", style="jenks")
+```
+
+## Points vs Polygons
+
+Map the states as points not polygons
+
+How?
+
+## USA Population
+```{r}
+tm_shape(uspop_albers) + tm_polygons(col="white",border.alpha = 0.5)+
+tm_shape(uspop_albers) + tm_symbols(col="popdens", style="jenks")
+```
+
+
+
+
 ## Multivariate
 ```
 bigmap <- tm_shape(sfboundary) + 
@@ -1558,12 +1836,9 @@ leaflet(cheap_good) %>% addTiles() %>%
   
 ```
 
-# Next Steps
+## The future is `sf`
 
-Next week, Part II
-
-# What's special about spatial objects?
-
+## What's special about spatial objects?
 
 ## What do you think this code does?
 
@@ -1584,10 +1859,13 @@ head(cheap_good@data)
 
 ```
 
-# The future is `sf`
+## Output code to script
+```
+library(knitr)
+purl("r-geospatial-workshop-f2017.Rmd", output = "test2.R", documentation = 2)
+```
 
-
-## Selected  References
+## References
 - https://data.cdrc.ac.uk/tutorial/an-introduction-to-spatial-data-analysis-and-visualisation-in-r
 - http://neondataskills.org/tutorial-series/vector-data-series/
 - http://www.nickeubank.com/gis-in-r/
@@ -1602,9 +1880,3 @@ head(cheap_good@data)
 
 “Visualisation” section of the CRAN Task View
 # 
-
-## Output code to script
-```
-library(knitr)
-purl("r-geospatial-workshop-f2017.Rmd", output = "test2.R", documentation = 2)
-```

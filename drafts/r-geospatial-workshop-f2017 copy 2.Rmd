@@ -1,0 +1,1458 @@
+---
+title: "r-geospatial-pt1-fall2017"
+author: "Patty Frontiera"
+date: "October 16, 2017"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T)
+```
+
+## Before we begin
+
+1. Download the workshop files
+
+2. Install any required libraries
+
+
+## Creating Maps in R
+
+Who are you?
+
+Why are you here?
+
+
+## Geographic Data
+
+
+## Geographic Data
+
+Observations about locations on or near the surface of the Earth.
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Anatone_WA.jpg/640px-Anatone_WA.jpg"></img>
+
+That tells you some useful information about this place but it doesn't tell you where it is on the surface of the Earth.
+
+## Anatone?
+
+<img width="800px" src="images/anatone_google.png"></img>
+
+## Geographic Coordinates
+
+`46.130479, -117.134167`
+  
+<img width="600px" src="images/anatone_google.png"></img>
+
+Which coordinate value is latitude?  which one is longitude?
+
+  
+## Geospatial data
+
+Geospatial data are geographic data that represent location geometrically with coordinates, such as latitude and longitude. 
+
+These coordinates are referenced to specific locations on the Earth using a a coordinate reference system. 
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Latitude_and_Longitude_of_the_Earth.svg/640px-Latitude_and_Longitude_of_the_Earth.svg.png"></img>
+
+
+
+
+## Anatone, WA   
+
+`46.130479, -117.134167`
+
+Latitude is zero at the equator and decreases to -90 at the South Pole and increases to + 90 at the North pole.
+
+Longitude is zero at the Prime Meridian (near London, England) and increases to -180 as you move west and to + 180 as you move east.
+
+So, since latitude is never > 90 or less than < -90 the order must be latitude, longitude.
+
+
+## Spatial Data
+
+Spatial data is a more generic term that is not just for geographic data. 
+
+Spatial data are powerful because software can dynamically determine spatial metrics like area and length, characteristics like distance and direction, and relationships like inside and intersects from these data.
+
+## TODO
+
+TODO Add more slides about vector & raster data
+with examples
+
+## Geospatial Data in R
+
+## Geospatial Data in R
+
+There are many approaches to and packages for working with geospatial data in R.
+
+One approach is to keep it simple and store geospatial data in a data frame
+
+##
+
+```{r }
+cafes <- read.csv('data/cafes.csv')
+head(cafes)
+
+```
+## Base plots of points
+
+```{r}
+plot(cafes$long,cafes$lat)
+```
+
+## Plotting points with ggplot2
+```{r}
+library(ggplot2)
+ggplot() + geom_point(data=cafes, aes(long,lat))
+```
+## Plots with ggmap
+```{r, eval=F}
+library(ggmap)
+berkeley_map <- get_map(location="Berkeley, CA", zoom=14)
+ggmap(berkeley_map) + geom_point(data=cafes, aes(long,lat))
+```
+
+## WAIT!
+
+For a number of reasons, it's not always great idea to treat spatial data like non-spatial data.
+
+## Why?
+
+## Problem 1: Complexity
+
+Complexity of spatial data representations
+
+Plus the attribute data that describe each feature
+
+## For example
+
+ADD some complex geometries
+
+
+## For example
+```
+# Spatial Line
+l1 = cbind(c(1,2,3),c(3,2,2))
+myline1 = Line(l1)
+myline2 = Lines(list(myline1), ID="a")
+myline3 = SpatialLines(list(myline2))
+myline4 <- SpatialLinesDataFrame(myline3,data.frame(c("Road 1")), match.ID = F)
+plot(myline4, col = c("red"))
+str(myline4)
+
+```
+
+
+
+##  Problem 2. The Earth
+
+The software needs to know how to reference spatial data to the surface of the Earth.
+
+- data about Earth coordinate reference systems
+- spatial objects that include CRS definitions
+- methods for using this information, eg transformations
+
+
+## `sp` package
+
+### The `SP` Package
+
+The `SP` package is most commonly used to provide support for spatial data objects in R. 
+Other R packages that do things with spatial data typically build on these SP objects.
+
+
+```{r}
+library(sp)
+ 
+```
+
+## SP Objects
+<style>
+   th,td{
+     padding:5px 5px 5px 5px;
+   }
+</style>
+<table border=1>
+<tbody>
+<tr><th>Vector Data </th><th>SP Spatial Class </th><th>SP Spatial Class with Attributes ></th></tr>
+<tr><td>Points</td><td>SpatialPoints</td><td>SpatialPointsDataFrame</td></tr>
+<tr><td>Lines</td><td>SpatialLines</td><td>SpatialLinesDataFrame</td></tr>
+<tr><td>Polygons</td><td>SpatialPolygons</td><td>SpatialPolygonsDataFrame</td></tr>
+</tbody>
+</table>
+<br> 
+
+
+## Let's take a look
+
+## Read in point Data
+
+```{r}
+rentals <- read.csv('data/sf_airbnb_2bds.csv')
+class(rentals)
+dim(rentals)
+
+```
+
+## Examine Data Structure
+```{r}
+str(rentals)
+```
+
+## Examine Data Content
+```{r}
+head(rentals)
+```
+
+## Visualize Data
+```{r}
+hist(rentals$price)
+```
+
+## Process Data
+```{r}
+cheap <- subset(rentals, price < 301)
+hist(cheap$price)
+```
+
+## Process Data Some More
+```{r}
+cheap_good <- subset(cheap, review_scores_rating > 98)
+hist(cheap$price)
+```
+
+
+## Make it spatial
+
+```{r}
+library(sp)
+```
+
+## Create a SpatialPointsDataFrame
+
+Use the `sp::coordinates()` method
+
+Requires a vector indicating the x,y columns
+
+SP will create a SpatialPointsDataFrame from csv
+
+## SpatialPointsDataFrame (SPDF)
+```{r}
+
+#First make a copy
+cheap_good_orig <- cheap_good
+
+coordinates(cheap_good) <- c('longitude','latitude')
+class(cheap_good)
+```
+
+## Compare SPDF to DF
+```{r}
+str(cheap_good_orig)
+```
+
+## SPDF
+```{r}
+str(cheap_good)
+```
+
+## S*DF Slots
+
+You can see from **str(cheap_good)** that a S*DF object is a collection of slots or components. The key ones are:
+
+- `@data` data frame of attributes that describe each location
+- `@coords` the coordinates for each location (or centroid if polygon)
+- `@bbox` the min and max lon(x) and lat(y) coordinates tthat together define the minimum bounding box around the locations
+- `@proj4string` the coordinate reference system defintion as a string
+
+## S*DF Slots
+ 
+Review the output of each of these:
+
+```{r, eval=F}
+head(cheap_good@coords)
+head(cheap_good@data)
+cheap_good@bbox
+cheap_good@proj4string
+```
+
+## S*DF Slots
+ 
+`@coords`
+
+```{r, eval=F}
+head(cheap_good@coords)
+ 
+#cheap_coords$latitude
+#cheap_coords$longitude
+```
+
+## S*DF Slots
+ 
+`@data`
+
+```{r, eval=F}
+head(cheap_good@data)
+```
+
+## S*DF Slots
+ 
+`@bbox`
+
+```{r, eval=F}
+
+cheap_good@bbox
+ 
+```
+
+## S*DF Slots
+ 
+`@proj4string`
+
+```{r, eval=F}
+
+ cheap_good@proj4string
+
+```
+
+
+## What's missing
+
+Are all the columns that were present in the DF now in the SPDF?
+
+Is there a slot without data?
+
+
+## What is the CRS of the data?
+```{r}
+
+cheap_good@proj4string # get a CRS object
+# or 
+proj4string(cheap_good) # method to get or set the CRS
+
+```
+
+## Define and Assign a CRS
+
+Assign (or set) a CRS to a spatial data object 
+- locates it on the surface of the Earth
+
+You need to know 
+
+- the CRS for the data
+- how to define the CRS object
+- how to assign it to the spatial data
+
+## ## Define and Assign a CRS
+
+Known as `defining a projection` in ArcGIS
+
+**Defining a CRS != Transforming CRS**
+
+We will get to transformations soon!
+
+## CRS Objects
+
+```{r}
+
+# Create a CRS object
+WGS84_CRS <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs") 
+
+# Set the CRS of the SPDF
+proj4string(cheap_good) <- WGS84_CRS
+
+# check it
+cheap_good@proj4string
+```
+
+## Another way
+
+```{r}
+
+proj4string(cheap_good) <- CRS("+proj=longlat 
+                               +ellps=WGS84 +datum=WGS84 +no_defs")  
+
+
+# or use the EPSG code
+proj4string(cheap_good) <- CRS("+init=epsg:4326") 
+
+```
+
+## Define and Assign - Incorrectly?
+
+What happens if we assign the wrong CRS?
+```{r}
+proj4string(cheap_good) <- CRS("+init=epsg:26910") # The EPSG code for UTM10 NAD83
+```
+## Define and Assign - Incorrectly?
+
+What happens if we assign the wrong CRS?
+
+Software doesn't care but you need to!
+
+## Finding CRS Codes
+
+See [http://spatialreference.org/](http://spatialreference.org/)
+
+Use this site to find EPSG codes and proj4 CRS strings
+
+## Common CRS Codes
+
+* `4326` Geographic, WGS84
+
+* `4269` Geographic, NAD83
+
+* `3310` Projected, CA ALbers
+
+* `26910` UTM Zone 10, NAD83 (Northern Cal)
+
+* `3857` web mercator
+
+## Geographic vs Projected CRSs
+
+Geographic CRSs
+
+- longitude, latitude
+- specify the shape of the earth ellipsoid
+- identify the origin (equator & prime meridean)
+- specify units, eg decimal degrees
+- "attach" the CRS to the Earth
+  - global: center of the earth
+  - local: local point of tangency
+
+## Projected CRS
+
+- Geographic CRS
+- Map projection to transform to 2D
+- Parameters to adjust origins
+- units (typically meters)
+- X, Y coordinates
+
+## CRS
+
+
+## Challenge
+
+Use [http://spatialreference.org/](http://spatialreference.org/) to make an educated guess as to the CRS of these coordinates:
+
+X = 549228.058249, Y = 4176578.444299
+
+Strategy:
+- review the bounding box coordinates for the CRSs referenced by the above codes.
+
+## Challenge 2
+
+What are the Units for that CRS?
+
+
+## Mapping Spatial Objects
+
+## spplot
+
+`sp` includes a plotting method `spplot`
+
+You can use it to create great maps but it is very low level
+
+which means, complex, non-intuitive syntax, long code
+
+## `spplot` the Data
+```{r}
+spplot(cheap_good)
+ 
+```
+
+## `spplot` the Data
+```{r}
+
+spplot(cheap_good,"price")
+
+```
+
+## Challenge
+
+Use `spplot` to create data maps from some of the other columns in the @data slot
+
+Getting help:
+
+`?spplot`
+
+
+## Examples
+```
+spplot(cheap_good,"bathrooms")
+
+spplot(cheap_good,"accommodates")
+
+spplot(cheap_good,"property_type")
+
+spplot(cheap_good,"neighbourhood")
+
+```
+
+## What's special about spatial objects?
+
+## What do you think this code does?
+
+Think about it
+
+Try it and see
+
+Check the help `?spDist`
+
+```{r, eval=F}
+
+coit_tower <- c("-122.405837,37.802032") 
+
+cheap_good$coit_dist <- 
+  spDistsN1(cheap_good,c(-122.405837,37.802032), longlat = T) 
+
+head(cheap_good@data)
+
+```
+
+## RECAP
+
+
+## Polygons and Lines
+
+Point data often in CSV files.
+
+Line, Polygon and raster data are more often in a spatial data file format.
+
+## Spatial Data File formats
+
+Vector points, lines & polygons:
+
+* CSV
+* [ESRI Shapefile](https://en.wikipedia.org/wiki/Shapefile)
+
+Raster grids
+
+* GeoJSON
+* TIFF, JPEG
+
+## ESRI Shapefile
+
+This is one of the most, if not the most common spatial vector data file formats.
+
+<img src="images/shapefile.png"></img>
+
+Old but everywhere!
+
+Gotchas: 2GB limit, 8char column names
+
+## Reading in Shapefile
+
+There's an R package for that! 
+
+## `rgdal`
+
+`rgdal` is an R port of the powerful and widely used [GDAL](http://gdal.org) library.
+
+It is the most commonly used R library for importing and exporting spatial data. 
+
+* `OGR`: for vector data: readOGR() and writeOGR()
+
+* `GDAL` for raster data: readGDAL() and writeGDAL()
+
+## `rgdal`
+
+```{r}
+
+library(rgdal)
+
+# See what file types are supported by rgdal drivers
+ogrDrivers()$name
+
+```
+
+## Getting help
+
+gdal.org
+
+`?readOGR
+
+For more info on working with `rgdal` to load different types of spatial data in R see this excellent [tutorial](http://zevross.com/blog/2016/01/13/tips-for-reading-spatial-files-into-r-with-rgdal/) by Zev Ross.
+
+
+## Read in Shapefile
+
+```{r}
+sfboundary <- readOGR(dsn="data",layer="sf_boundary")
+
+# or
+# sfboundary <- readOGR("data","sf_boundary")
+# but not
+#sfboundary <- readOGR(dsn="data/",layer="sf_boundary")
+
+```
+
+## Check out the data structure
+
+```{r}
+str(sfboundary)  
+```
+
+
+## Take a look at the attribute data
+
+How?
+
+## Take a look at the attribute data
+
+```{r}
+head(sfboundary@data)   
+```
+
+## Take a look at the coordinate data
+
+How?
+
+## Take a look at the coordinate data
+```{r}
+sfboundary@bbox
+```
+
+## Take a look at the CRS info
+
+How?
+
+## Take a look at the CRS info
+
+```{r}
+
+sfboundary@proj4string
+
+```
+
+
+## Make a quick plot to check the data
+
+## Make a quick plot to check the data
+```{r}
+
+plot(sfboundary)
+
+# Add a label
+text(sfboundary@polygons[[1]]@labpt[1], 
+     sfboundary@polygons[[1]]@labpt[2], "San Francisco")
+
+```
+
+## Plot with Rentals
+```{r}
+
+plot(sfboundary)
+points(cheap_good, col="red")
+
+```
+
+## What's Wrong?
+
+```{r}
+
+proj4string(sfboundary)
+proj4string(cheap_good)
+proj4string(sfboundary) == proj4string(cheap_good)
+
+```
+
+## What do the coord data look like?
+
+```{r}
+sfboundary@bbox
+cheap_good@bbox
+```
+
+## CRS Transformations
+
+
+## CRS Transformations
+
+All geospatial data should have the same CRS
+
+Geospatial Data transformations are super common
+
+Most common transformation is the CRS
+
+This is also called a projection transformation, or `reprojection`
+
+## Transform the CRS
+
+Use `sp` function `spTransform`
+
+Requires as input 
+* a spatial object to transform
+* a CRS object that indidicates the CRS to which the data should be transformed
+  * Input spatial object must have CRS defined
+
+Outputs a new spatial object with coordinate data in the target CRS
+
+## Transform the sfboundary
+
+```{r}
+
+sf_lonlat <- spTransform(sfboundary, WGS84_CRS)
+
+#What other syntax can use to transform?
+```
+
+## spTransform 4 Ways
+
+Set CRS to that of another data layer
+```
+sf_lonlat <- spTransform(sfboundary, CRS(proj4string(cheap_good)))
+```
+
+Use CRS string
+```
+sf_lonlat <- spTransform(sfboundary, CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+```
+
+USE CRS code
+```
+sf_lonlat <- spTransform(sfboundary, CRS("+init=epsg:4326"))
+```
+
+Use a CRS object
+```
+WGS84_CRS <- CRS(proj4string(cheap_good))
+sf_lonlat <- spTransform(sfboundary, WGS84_CRS)
+```
+
+## Did it work?
+
+How will we know?
+
+## Overlay the data in space
+
+```{r}
+plot(sf_lonlat)
+points(cheap_good, col="red")
+points(cheap_good[cheap_good$price<100,], col="green", pch=19)
+# see the [Quick-R website's](http://www.statmethods.net/advgraphs/parameters.html) page for graphical parameters.
+```
+
+
+## Projections, CRS, oh my!
+
+TODO: add info about CRS/Map Projection
+
+## We want all data in the same projection
+
+Which one is best?
+
+
+## Lines
+
+Let's read in some Line data
+In the popular [GeoJSON](http://geojson.org) file format 
+
+## Adding Lines
+
+```{r}
+sf_streets <- readOGR(dsn='data/sf_highways.geojson', layer="OGRGeoJSON")
+```
+
+## Take a look
+```{r}
+plot(sf_streets)
+
+```
+
+## Plot all the data
+
+How do we do that?
+
+## Plot all the data
+
+```{r}
+plot(sf_lonlat)
+lines(sf_streets)
+points(cheap_good, col="red")
+points(cheap_good[cheap_good$price<100,], col="green")
+```
+
+## RECAP
+
+* Read in data in CSV, Shapefile and GeoJSON formats 
+  * with `rgdal::writeOGR`
+  
+* Defined CRS with `proj4string()`
+
+* Transformed CRS with `spTransform()`
+
+* Mapped data with `plot()` and `spplot`
+
+* Mapped multilple geospatial data layers
+
+## What can we do with our spatial data?
+```{r}
+coit_tower <- c("-122.405837,37.802032") 
+#?spDist
+cheap_good$coit_dist <- spDistsN1(cheap_good,c(-122.405837,37.802032), longlat = T) # Try False - what do you get?
+head(cheap_good@data)
+summary(cheap_good$coit_dist)
+hist(cheap_good$coit_dist)
+spplot(cheap_good,"coit_dist")
+```
+
+## Data Driven Maps
+
+## Data Driven Maps
+
+Thematic Maps / Data Maps
+
+Use data values to drive symbology
+
+Use symbology to convey data values
+
+
+# R packages for Mapping
+
+Lots of them
+
+Let's quickly discuss the most common ones
+
+## `ggplot2` and `ggmap`
+
+Pros
+* beautiful maps with `ggplot2`
+* builds on existing R knowledge of `ggplot2`
+* Some great geospatial data functionality in `ggmap`
+
+Cons
+* Doesn't work with `sp` objects
+* Limited support for CRS and spatial operations
+* Complex syntax to create great maps
+
+##  `plot`
+
+Pros
+* Quick maps
+* Easy to map multiple layers
+* Works with sp objects
+
+Cons
+* Not pretty
+* Requires lots of complex code to make pretty
+* Not spatial
+
+##`spplot`
+
+Pros
+* Quick thematic maps of one layer
+
+Cons
+* Not too pretty
+* Pretty maps require lots of complex code
+
+##`tmap`
+
+Pros
+* Quick and powerful maps
+* Syntax similar too but not as complex as `ggplot2`
+* Easy to save as interactive or static maps
+
+Cons
+* No basemaps in static mode
+
+## `leaflet`
+
+R port of the popular Javascript library
+
+Allows one to create interactive maps that can be served on web
+
+
+# Tmap
+
+## Tmap
+
+`Tmap` stands for Thematic maps
+
+Nice maps with less code than the alternatives
+
+Syntax should be familar to ggplot2 users, but simpler
+
+[Tmap in a Nutshell](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-nutshell.html) is a good starting point
+
+## Tmap
+
+Load the library
+
+```{r}
+library(tmap)
+?tmap
+```
+
+## Quick Tmap - `qtm`
+
+Just draw the shapes
+
+```{r}
+
+qtm(sf_lonlat)
+
+```
+
+## Tmap shapes and thematic style elememts
+
+Tmap's flexibility comes in how it intitively allows you to layer spatial data and style the layers by data attributes
+
+Use `tm_shape(<sp_object>)`  to specifiy a geospatial data layer
+
+Add `+ tm_<element>(...)` to style the layer by data values
+
+```{r}
+tm_shape(sf_lonlat) + tm_polygons(col="beige")
+
+```
+
+
+## Mapping multiple layers 
+
+```{r}
+tm_shape(sf_lonlat) + tm_polygons(col="beige") + 
+tm_shape(sf_streets) + tm_lines(col="green") +
+tm_shape(cheap_good) + tm_symbols(col="red")
+
+```
+## Challenge
+
+See `?tm_symbols` to see what parameter you would add to make the symbol sizes smaller
+
+See `?tm_lines` to see how you would increase the thickness (or weight) of the street lines
+
+See `?tm_polygons` to see how you would change the fill and border color and add transparency to the fill
+
+Bonus - what parameter adjusts transparency?
+
+## Solution
+
+```{r}
+tm_shape(sf_lonlat) + tm_polygons(col="beige", border.col = "blue") + 
+tm_shape(sf_streets) + tm_lines(col="black", lwd = 3) +
+tm_shape(sf_streets) + tm_lines(col="white", lwd = 1) +
+tm_shape(cheap_good) + tm_symbols(col="red", size = 0.5, alpha=0.5)
+
+```
+
+
+## Does this work?
+
+If yes, what does it tell you?
+
+```{r}
+
+tm_shape(sfboundary) + tm_polygons(col="beige") + 
+tm_shape(cheap_good) + tm_symbols(col="red")
+
+```
+
+# Category Maps
+
+Mapping categorical (or qualitative) data with
+
+## Category Maps
+
+```{r}
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(shape="property_type")
+```
+
+# Mapping Quantitative Data
+
+Using color and size to convey data values
+
+
+## Proportional Symbol Maps
+```{r}
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(size="price")
+```
+
+## Challenge
+
+Redo that map
+- set background color to transparent
+- set legend title to Price per Night
+
+##
+```{r}
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(size="price", title.size = "Price per Night", alpha = 0)
+```
+
+
+## Proportional Color Maps
+```{r}
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(col="price")
+```
+
+
+## Critique
+
+What worked?
+
+What didn't?
+
+How to improve?
+
+#---------------------------------------------------------------------------------------------
+
+## Cartography
+
+The Art and Science of Map Making
+
+Science: 
+* the data, the domain,
+* communication &visualization theory
+
+Art: 
+* color, shape, size, transparency, weight, context
+* selection and application
+
+# Color
+
+## rColorBrewer Package
+
+The R package `RColorBrewer` is often used to select color palettes. Read the package help for more info.
+
+You can use the `display.brewer` function to see the colors in a specific named palette.
+
+For example:
+
+```{r }
+library(RColorBrewer)
+# ?ColorBrewer # access help pages
+# or colorbrewer.org
+
+display.brewer.pal(5,"Set3") # qualitative color palette with 5 colors
+di
+```
+
+## Types of Color Palettes:
+
+- **Qualitative** - complementary colors, e.g. pastels, to emphasize different categories
+
+- **Sequential** - a range of different shades of the same color (hue) to imply higher to lower ranks or values
+
+- **Divergent** - two squential color palettes with a light or grey color in the middle; used to emphasize outliers
+
+## Nobody said this was easy!
+
+<img width="800px" src="https://brobible.files.wordpress.com/2014/10/map-best-edm-songs-per-state-pandora-blue3.jpg?"></a>
+
+
+## Displaying Color Palettes by Type
+
+```{r, eval=FALSE}
+display.brewer.all(type="qual")
+display.brewer.all(type="seq")
+display.brewer.all(type="div")
+```
+
+
+## Applying a Color Palette
+
+Let's see how a `YlOrRd` palette works with this data.
+
+
+```{r}
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(col="price", palette = "YlOrRd")
+
+```
+
+## Challenge
+
+1. Change the color palette to Blues and Purples (squential)
+
+2. Change the color palette to Spectral (divergent) using red for higher prices.
+
+Use `display.brewer.all` and the Examples in `?tm_symbols` for help
+
+Hint: you may need to set `auto.palette.mapping` for Spectral colors
+
+## Solution
+
+```{r, eval = F}
+
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(col="price", size=0.5, palette = "BuPU", auto.palette.mapping=FALSE)
+
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(col="price", size=0.5, palette = "-Spectral", auto.palette.mapping=FALSE)
+
+```
+
+
+## Order matters!
+
+Layers draw in the order that they are added to the map. 
+
+So, should it be
+
+- points, lines, polygons
+or
+- polygons, points lines
+
+## Order matters!
+
+Data will display on the map in the order it appears in the data frame.
+
+You can sort the data by a column value to control this.
+
+Question:
+Would you order ascending or descending to better see cheap rentals?
+
+## Draw Order
+
+```{r}
+# sort data frame by price
+cheap_good <- cheap_good[order(cheap_good$price, decreasing = TRUE),] 
+
+tm_shape(sfboundary) + 
+  tm_polygons(col="beige") + 
+tm_shape(cheap_good) + 
+  tm_symbols(col="price", size=0.5, palette = "-Spectral", auto.palette.mapping=FALSE)
+```
+
+
+# Data classification
+
+## Data classification
+
+Another extremely important method for improving the cartographic display of continuous data is data classification. 
+
+While unclassified maps are great for exploring trends and outliers, they make it very hard to interpret specific data values.
+
+The eye can only differentiate a few colors.
+
+## Data classification
+
+You can use a data classification method to reduce the complexity in your mapped data by classifying continuous values into small number of bins, typically 5-7. 
+
+Symbology - unique colors or sizes - is then associated with each bin.
+
+A legend indicates the association, making it easier for the map reader to interpret data values.
+
+
+## Data Classification Methods
+
+Common methods for binning data into a set of classes include:
+
+- `equal interval`: classes the data into bins of equal data ranges, e.g. 10-20, 20-30, 30-40.
+
+- `quantile`: classes the data into bins with an equal number of data observations. This is the default for most mapping software.
+
+- `jenks/natural breaks`: classes data into bins that minmizie within group variance and maximize between group variance.
+
+- `standard devation`: classes emphasize outliers by classing data into bins based on standard deviations around the mean, eg -2 to + 2 SDs.
+
+
+## Data Classification and Maps
+
+Graduated Color Maps
+- Data are classified into bins that are symbolized by colors
+
+Graduated Symbol Maps
+- Data are classified into bins that are symbolized by size
+
+
+## Graduated Symbol Maps
+
+Let's create a graduated symbol map based on `price`
+
+To do this we add a `style=<classification method>` parameter to tm_polygons, tm_lines or tm_symbols
+
+See `?tm_symbol` etc for examples and options and search for`style`
+
+## Graduated Symbol Maps
+
+```{r}
+tm_shape(sfboundary) + tm_polygons(col="white") + 
+tm_shape(cheap_good) + tm_symbols(size="price", style="quantile", border.col="red", alpha=0, title.col="Price per Night")
+```
+
+## Compare that to an unclassifed symbol map
+```{r}
+tm_shape(sfboundary) + tm_polygons(col="white") + 
+tm_shape(cheap_good) + tm_symbols(size="price", border.col="red", alpha=0, title.col="Price per Night", perceptual=T)
+```
+
+
+## Graduated Symbol Maps
+
+```{r}
+tm_shape(sfboundary) + tm_polygons(col="white") + 
+tm_shape(cheap_good) + tm_symbols(size="price", style="sd", border.col="red", alpha=0,  title.col="Price per Night")
+```
+
+## Challenge
+
+Try some other classification schemes for your graduated symbol map
+
+Note how the affect the display of the data
+
+# Graduated Color Maps
+
+Hold size constant and vary color to create a Graduated color map
+
+Choice of color palette is very important
+
+## Gradiated Color map
+```{r}
+
+tm_shape(sfboundary) + 
+  tm_polygons(col="#fbf9f1") + 
+tm_shape(cheap_good) + tm_symbols(col="price", style="jenks", size=.5, 
+      palette="Reds", auto.palette.mapping=F, 
+      border.alpha=0, alpha=0.75, title.col="Price per Night")
+```
+
+
+## Color and Classification method
+
+Try different classification methods
+
+Note how they change the 
+
+
+```{r}
+tm_shape(sfboundary) + 
+  tm_polygons(col="white") + 
+tm_shape(cheap_good) + tm_symbols(col="price", style="equal",size=.5, 
+      palette="Reds", auto.palette.mapping=F, 
+      border.alpha=0, alpha=0.75, title.col="Airbnb 2bd Price")
+```
+
+
+## Choropleth maps
+
+Color areas by data values
+
+The polygon version of the graduated color map
+
+## US Population by State
+
+# load it in and view it
+```{r}
+uspop <- readOGR("./data", "us_states_pop")
+plot(uspop)
+```
+
+
+
+
+# Map it with `tmap`
+
+```{r}
+tm_shape(uspop) + tm_polygons(col="POPULATION")
+```
+
+# Try a different class
+
+```{r}
+tm_shape(uspop) + tm_polygons(col="POPULATION", style="jenks")
+```
+
+## Notice anything odd about the shape of the USA?
+
+What's the CRS?
+
+Why might that matter?
+
+## Projection Transformation
+
+When larger areas are mapped using geographic coordinates the distortion becomes more noticeable.
+
+So these data are typically transformed to another CRS that better preserves shape.
+
+## USA Contiguous Albers Equal Area Conic, EPSG:5070
+
+The Albers equal area conic is the typical projection for historical USGS maps of the lower 48
+
+It being a general-purpose low-distortion compromise for mid-latitude short and wide extents
+
+Preserves relative shape
+
+## USA ALbers
+
+```{r}
+uspop_albers <- spTransform(uspop, CRS("+init=epsg:5070"))
+
+tm_shape(uspop_albers) + tm_polygons(col="POPULATION", style="jenks")
+```
+
+
+## Challenge
+
+Map population density instead of population
+
+## Discuss
+```{r, eval=F}
+
+tm_shape(uspop_albers) + tm_polygons(col="popdens", style="jenks")
+#vs
+tm_shape(uspop_albers) + tm_polygons(col="POPULATION", style="jenks")
+```
+
+## Points vs Polygons
+
+Map the states as points not polygons
+
+How?
+
+## USA Population
+```{r}
+tm_shape(uspop_albers) + tm_polygons(col="white",border.alpha = 0.5)+
+tm_shape(uspop_albers) + tm_symbols(col="popdens", style="jenks")
+```
+
+
+
+
+## Multivariate
+```{r}
+bigmap <- tm_shape(sfboundary) + 
+   tm_polygons(col="beige") + 
+ tm_shape(cheap_good) + 
+    tm_symbols(size="coit_dist", title.size="Distance to Coit Tower (KM)", col="price", title.col="Price", shape="property_type", title.shape="Property Type") +
+   tm_layout( legend.bg.color="white",inner.margins=c(.05,.05, .15, .25), title="Airbnb 2 Bedroom Rentals, San Francisco Fall 2017", legend.position=c("right","center"))
+ 
+ bigmap
+
+```
+
+## Plot vs View Modes
+
+`tmap` has two modes: **plot** and **view**
+
+The plot mode is the default and is for creating static maps.
+
+The view mode is for creating interactive maps using `leaflet`.
+
+You can switch back and forth with the `tm_mode()` function
+
+## View mode
+
+```{r}
+tmap_mode("view")
+tm_shape(uspop_albers) + tm_polygons(col="POPULATION", style="jenks")
+```
+
+
+## Add Popup Content
+
+`?tmap_mode`
+
+```{r}
+tmap_mode("view")
+tm_shape(uspop_albers) + tm_polygons(col="POPULATION", style="jenks", popup.vars=c("NAME","POPULATION","popdens"))
+```
+
+## Plot Mode
+
+Return to plot mode
+
+```{r}
+tmap_mode('plot')
+```
+
+## leaflet
+```{r}
+library(leaflet)
+?leaflet
+```
+
+## Simple leaflet map
+
+```{r}
+leaflet(cheap_good) %>% addTiles() %>%
+    addCircleMarkers(data = cheap_good, radius = 5, stroke=F,
+    color = "purple", fillOpacity = 0.75
+  )
+```
+
+## Color Palettes
+```
+library(RColorBrewer)
+
+display.brewer.all()
+
+```
+## Add palette
+
+
+```{r}
+pal <- colorQuantile("Reds",NULL,5)
+leaflet(cheap_good) %>% addTiles() %>%
+    addCircleMarkers(
+      data = cheap_good,
+      radius = 6,
+      color = ~pal(price),
+      stroke = F, 
+      fillOpacity = 0.75
+  )
+```
+
+# Add popup
+```{r}
+popup_content <- cheap_good$name
+popup_content <- paste0(popup_content, "<br>Price per night: $", cheap_good$price)
+popup_content <- paste0(popup_content, "<br><a href=",cheap_good$listing_url,">More info...</a>")
+
+```
+```{r}
+ 
+leaflet(cheap_good) %>% addTiles() %>%
+    addCircleMarkers(
+      data = cheap_good,
+      radius = 6,
+      color = ~pal(price),
+      stroke = F, 
+      fillOpacity = 0.75,
+      popup = popup_content)
+  
+```
+
+## The future is `sf`
+
+
+## Output code to script
+```
+library(knitr)
+purl("r-geospatial-workshop-f2017.Rmd", output = "test2.R", documentation = 2)
+```
+
+## References
+- https://data.cdrc.ac.uk/tutorial/an-introduction-to-spatial-data-analysis-and-visualisation-in-r
+- http://neondataskills.org/tutorial-series/vector-data-series/
+- http://www.nickeubank.com/gis-in-r/
+- http://www.rspatial.org/spatial/rst/3-vectordata.html
+- https://dl.dropboxusercontent.com/u/9577903/broomspatial.pdf
+- https://github.com/Robinlovelace/Creating-maps-in-R/raw/master/intro-spatial-rl.pdf
+- https://rstudio.github.io/leaflet
+- http://zevross.com/blog/2015/10/14/manipulating-and-mapping-us-census-data-in-r-using-the-acs-tigris-and-leaflet-packages-3/
+- http://rstudio-pubs-static.s3.amazonaws.com/6577_3b66f8d8f4984fb2807e91224defa854.html
+- https://cengel.github.io/rspatial/
+- http://robinlovelace.net/geocompr/ (The future is SF)
+
+“Visualisation” section of the CRAN Task View
