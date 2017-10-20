@@ -1,7 +1,7 @@
 ---
 title: "r-geospatial-pt1-fall2017"
 author: "Patty Frontiera"
-date: "October 16, 2017"
+date: "October 20, 2017"
 output: ioslides_presentation
 ---
 
@@ -28,7 +28,7 @@ knitr::opts_chunk$set(echo = T)
 
 Patty Frontiera
 
-Dlab.berkeley.edu
+[dlab.berkeley.edu](http://dlab.berkeley.edu)
 
 ## About you
 
@@ -41,7 +41,24 @@ Why are you here?
 
 1. Download the workshop files
 
+https://github.com/dlab-geo/r-geospatial-workshop
+
+- Download the zip file
+
+- Open RStudio and start a new script
+
+- Follow along by opening [r-geospatial-workshop-f2017.Rmd](https://github.com/dlab-geo/r-geospatial-workshop/blob/master/r-geospatial-workshop-f2017.Rmd) in your web browser
+
 2. Install any required libraries
+
+```{r, eval=F}
+
+install.packages(
+  c("sp","rgdal","tmap","classInt","RColorBrewer",
+    "ggplot2","leaflet"), dependencies=TRUE
+)
+
+```
 
 
 ## Geographic Data
@@ -233,6 +250,8 @@ We use the S*DF objects most frequently!
 ## Read in point Data
 
 Airbnb Rental data from http://insideairbnb.com
+
+- *subsetted and used only for demonstration purposes*
 
 ```{r}
 rentals <- read.csv('data/sf_airbnb_2bds.csv')
@@ -1587,6 +1606,8 @@ tm_shape(cheap_good) +
 ## Solution 2. Interactive Map
 
 ```{r, eval=F}
+tmap_mode("view")
+
 tm_shape(sf_lonlat) + 
     tm_polygons(col="beige", border.col = "blue") + 
 tm_shape(sf_streets) + 
@@ -1596,8 +1617,8 @@ tm_shape(sf_streets) +
 tm_shape(cheap_good) + 
     tm_symbols(col="red", size = 0.5, alpha=0.5, style="jenks", 
     popup.vars=c("name","price","listing_url"))
-
-tmap_mode("view")
+    
+tmap_mode("plot")
 ```
 
 # More Maps
@@ -1786,7 +1807,7 @@ head(cheap_good@data)
 
 ## Session Info
  
-```{r}
+```{r, }
 sessionInfo()
 ```
 
