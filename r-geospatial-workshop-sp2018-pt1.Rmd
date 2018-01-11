@@ -315,7 +315,7 @@ sfhomes <- read.csv('data/sf_properties_25ksample.csv')
 ```
 
 ```{r, eval=F }
-sfhomes <- read.csv('data/sf_properties.csv')  
+sfhomes <- read.csv('data/sf_properties_25ksample.csv')  
 head(sfhomes,6)
 
 ```
@@ -407,7 +407,7 @@ See this [StackOverflow discussion](https://stackoverflow.com/questions/34402979
 ```{r, echo=FALSE}
 #devtools::install_github("dkahle/ggmap")
 #library(ggmap)
-register_google(key="AAXXXXXBBB") # your key here
+register_google(key="AIzXXXXXXXXXXXXXXXXXXXXXxPSE") # your key here
 ```
 
 ##  get_map
@@ -513,7 +513,7 @@ ggmap(sf_basemap_lite) +
   facet_wrap(~ SalesYear)
 ```
 
-# GGMap and GGPlot are great but...
+# GGMap and GGPlot are great!
 
 ## BUT!
 
@@ -556,21 +556,8 @@ The `SP` package is most commonly used to construct and manipulate spatial data 
 
 **Hundreds** of other R packages that do things with spatial data typically build on SP objects.
 
-# IMPORTANT ANNOUNCEMENT
 
-## `sf` package
-
-The `sf`, or `simple features` package in R has many improvements
-
-Based on open standards for specifying spatial data
-
-`ggplot` and `ggmap` can map `sf` spatial objects
-
-But most spatial packages still depend on `sp`
-
-So, live on the bleeding edge or check back in a year or so.
-
-# `sp` package
+# sp package
 
 ## `sp` package
 
@@ -601,7 +588,7 @@ We use the S*DF objects most frequently!
 
 ## From Data Frame to SpatialPointsDataFrame
 
-Let's transform the sfhomes15 data frame to an `sp` object of type `SpatialPointsDataFrame`
+Let's transform the `sfhomes15` data frame to an `sp` object of type `SpatialPointsDataFrame`
 
 
 ## `sp::coordinates()` 
@@ -1047,14 +1034,8 @@ We want all data in the same CRS
 
 Which one is best?
 
-<img height ="600px" src="https://d3enniz247y0a9.cloudfront.net/website/var/tmp/image-thumbnails/30000/34546/thumb__article-header-square/hero-square-gettyimages-563936217.jpeg"></img>
+<img height ="500px" src="https://d3enniz247y0a9.cloudfront.net/website/var/tmp/image-thumbnails/30000/34546/thumb__article-header-square/hero-square-gettyimages-563936217.jpeg"></img>
 
-
-## Finding CRS Codes
-
-See [http://spatialreference.org/](http://spatialreference.org/)
-
-Use this site to find EPSG codes and proj4 CRS strings
 
 ## Common CRS Codes
 
@@ -1074,6 +1055,11 @@ Use this site to find EPSG codes and proj4 CRS strings
 
 * `3857` Web Mercator (web maps)
 
+## Finding CRS Codes
+
+See [http://spatialreference.org/](http://spatialreference.org/)
+
+Use this site to find EPSG codes and proj4 CRS strings
 
 # QUESTIONS?
 
@@ -1350,6 +1336,20 @@ tm_shape(us_states_5070) + tm_polygons(col="beige") +
 - tmap
 
 # End of Part I
+
+# IMPORTANT ANNOUNCEMENT
+
+## `sf` package
+
+The `sf`, or `simple features` package in R has many improvements
+
+Based on open standards for specifying spatial data
+
+`ggplot` and `ggmap` can map `sf` spatial objects
+
+But most spatial packages still depend on `sp`
+
+So, live on the bleeding edge or check back in a year or so.
 
 
 ## Output code to script
