@@ -311,9 +311,7 @@ We are using this as a proxy for home values.
 
 ## Load the CSV file into a data frame
 ```{r, echo=F }
-sfhomes <- read.csv('data/sf_properties.csv')
-library(dplyr)
-sfhomes <- sample_n(sfhomes, 25000)
+sfhomes <- read.csv('data/sf_properties_25ksample.csv')
 ```
 
 ```{r, eval=F }
@@ -390,15 +388,42 @@ Geocode place names and addresses to get point coordinates.
 and more...
 
 ## ggmap
+
+Load the libary
 ```{r}
 library(ggmap)
+```
 
-# fetch map data (default=Google) to plot
-# ?get_map
+## ggmap
+
+Some functionality may require you to register a Google API key
+See this [StackOverflow discussion](https://stackoverflow.com/questions/34402979/increase-the-api-limit-in-ggmaps-geocode-function-in-r)
+
+```{r}
+#devtools::install_github("dkahle/ggmap")
+#library(ggmap)
+#register_google(key="XXXXX") # your key here
+```
+```{r, echo=FALSE}
+#devtools::install_github("dkahle/ggmap")
+#library(ggmap)
+register_google(key="AAXXXXXBBB") # your key here
+```
+
+##  get_map
+
+Fetch map data (default=Google) to plot using `get_map`
+
+Use `?get_map` for details
+```{r}
 sf_map <- get_map("San Francisco, CA")  
 ```
 
+This use of the command leverages the Google Geocoding API.
+
+
 ## Display the ggmap of SF
+
 ```{r}
 ggmap(sf_map)
 ```

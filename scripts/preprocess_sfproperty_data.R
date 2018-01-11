@@ -60,3 +60,7 @@ write.csv(d3, file="~/Documents/Dlab/workshops/2018/r-geospatial-workshop/data/s
 rm(d1)
 rm(d2)
 
+library(dplyr)
+sfhomes <- sample_n(sfhomes, 25000)
+write.csv(sfhomes, file="~/Documents/Dlab/workshops/2018/r-geospatial-workshop/data/sf_properties_25ksample.csv", row.names = F)
+
