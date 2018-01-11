@@ -1,4 +1,4 @@
-"","name","long","lat","taste","price","crowded","food"
+"ID","name","long","lat","taste","price","crowded","food"
 "1","babette",-122.255374,37.868428,10,4,1,1
 "2","musical",-122.260698,37.868383,7,3.25,1,1
 "3","starbucks",-122.266057,37.870441,6,2.95,1,0
