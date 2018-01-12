@@ -407,7 +407,8 @@ See this [StackOverflow discussion](https://stackoverflow.com/questions/34402979
 ```{r, echo=FALSE}
 #devtools::install_github("dkahle/ggmap")
 #library(ggmap)
-register_google(key="AIzXXXXXXXXXXXXXXXXXXXXXxPSE") # your key here
+#register_google(key="AIzXXXXXXXXXXXXXXXXXXXXXxPSE") # your key here
+register_google(key="AIzaSyDHsYNZmqmTNvFn36tq470iRyXgQEU-PSE")
 ```
 
 ##  get_map
@@ -475,7 +476,7 @@ ggmap(sf_basemap_lite) +
 ## Facets / Small Multiples / Micro Maps
 ```{r, eval=F}
 # Let's look at last 5 years
-sfhomes2010_2015 <- subset(sfhomes, as.numeric(SalesYear) > 2009)
+sfhomes2010_15 <- subset(sfhomes, as.numeric(SalesYear) > 2009)
 
 ggmap(sf_basemap_lite) +
   geom_point(aes(lon, lat, col=totvalue), data = sfhomes2010_15 )  +
@@ -504,7 +505,7 @@ Redo above facet map with the following changes:
 - Use data from 1995 - 1999
 - Use a different basemap (eg maptype="terrain")
 
-# Challenge
+## Challenge
 ```{r}
 sfhomes1995_1999 <- subset(sfhomes, (as.numeric(SalesYear) >= 1995) & (as.numeric(SalesYear) <= 1999))
 
@@ -667,7 +668,7 @@ head(sfhomes15_sp$lat)
 head(sfhomes15_sp$lon)
 
 sfhomes15_sp@proj4string
-proj4strings(sfhomes15_sp)
+proj4string(sfhomes15_sp)
 
 ```
 
