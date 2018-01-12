@@ -35,7 +35,7 @@ Taste of Spatial Analysis
 
 - Load our data from part 1
 
-- Open the slide deck to follow along:  http://bit.ly/geo_r_pt2
+- Open the slide deck to follow along:  http://bit.ly/geospatial_workshop_part2
 
 
 ## R Spatial Libraries
