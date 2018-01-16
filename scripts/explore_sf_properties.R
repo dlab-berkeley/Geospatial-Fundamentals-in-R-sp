@@ -30,6 +30,7 @@ d2010_16 <- subset(d1, as.numeric(SalesYear) > 2005)
 ggplot(d2010_16, aes(x=lon, y=lat, col=totvalue, alpha=1)) +
   geom_point() +
   facet_wrap(~ SalesYear)
+
 # facet plot properties sold 1995 to 2000
 d1995_99 <- subset(d1, (as.numeric(SalesYear) >= 1995) & (as.numeric(SalesYear) < 2000))
 
@@ -107,7 +108,7 @@ ggmap(sf_basemap_lite, extent = "device") +
 # See
 # https://github.com/dkahle/ggmap
 
-## Limits
+## Limits of ggplot/ggmap
 
 Oops - want to add a shapefile
 
@@ -136,39 +137,14 @@ install.packages("broom")
 library(broom)
 
 bart_utm_df <- tidy(bart_utm)
-#-----------------------------
-# More stuff
-
-
-# NOT SURE IF THE FOLLOWING IS OBSOLETE
-# You've seen you can add layers to a ggmap() plot by adding geom_***() layers and
-# specifying the data and mapping explicitly, but this approach has two big downsides:
-# further layers also need to specify the data and mappings, and facetting won't work at all.
-# Luckily ggmap() provides a way around these downsides: the base_layer argument.
-# You can pass base_layer a normal ggplot() call that specifies the default data and mappings for all layers.
-# By moving aes(x, y) and data from the initial geom_point() function to the ggplot() call within the ggmap() call,
-# you can add facets, or extra layers, the usual ggplot2 way.
 
 
 # Exploring sp slots
-one <- countries_spdf@polygons[[169]]
-str(one, max.level=2)
 
 # typical
 # read in readOGR, summary(), plot(), head()
 
-# explore crs
-# proj4string() on nyc_tracts and neighborhoods
-proj4string(nyc_tracts)
-proj4string(neighborhoods)
-# coordinates() on nyc_tracts and neighborhoods
-head(coordinates(nyc_tracts))
-head(coordinates(neighborhoods))
-
-
 # before merge:
-#setdiff(nyc_income$tract, nyc_tracts$TRACTCE)
-
 a<- c(1,2,4)
 b<- c(2,6,4)
 setdiff(a,b)

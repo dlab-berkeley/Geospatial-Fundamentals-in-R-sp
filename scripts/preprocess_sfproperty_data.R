@@ -61,6 +61,6 @@ rm(d1)
 rm(d2)
 
 library(dplyr)
-sfhomes <- sample_n(sfhomes, 25000)
-write.csv(sfhomes, file="~/Documents/Dlab/workshops/2018/r-geospatial-workshop/data/sf_properties_25ksample.csv", row.names = F)
+sfhomes_25k <- sample_n(sfhomes, 25000)
+write.csv(sfhomes_25k, file="~/Documents/Dlab/workshops/2018/r-geospatial-workshop/data/sf_properties_25ksample.csv", row.names = F)
 
