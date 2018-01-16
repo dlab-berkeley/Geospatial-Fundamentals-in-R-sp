@@ -561,6 +561,11 @@ save_tmap(map1, "tmap_choropleth.png", height=4) # Static image file
 save_tmap(map1, "tmap_choropleth.html") # interactive web map
 ```
 
+##
+```{r}
+map1 <- tm_shape(us_states_5070) + tm_polygons(col="POPULATION", style="jenks")
+map1
+```
 ## Sharing your interactive Map
 
 - Save & view locally or email
