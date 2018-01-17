@@ -814,7 +814,7 @@ But for the data to be useful we need
 
 ```{r}
 
-homes_with_tracts <- homes_with_tracts[c("GEOID")]
+homes_with_tracts <- homes_with_tracts[,c("GEOID")]
 ```
 
 ## Add the the DF to the SPDF
