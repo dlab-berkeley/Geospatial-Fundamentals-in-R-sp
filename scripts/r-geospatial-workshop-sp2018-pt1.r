@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = T)
 sfhomes <- read.csv('data/sf_properties_25ksample.csv')
 
 ## ---- eval=F-------------------------------------------------------------
-## sfhomes <- read.csv('data/sf_properties.csv')
+## sfhomes <- read.csv('data/sf_properties_25ksample.csv')
 ## head(sfhomes,6)
 ## 
 
@@ -57,8 +57,18 @@ ggplot() + geom_point(data=sfhomes15, aes(x=lon, y=lat, col=totvalue))
 ## ------------------------------------------------------------------------
 library(ggmap)
 
-# fetch map data (default=Google) to plot
-# ?get_map
+## ------------------------------------------------------------------------
+#devtools::install_github("dkahle/ggmap")
+#library(ggmap)
+#register_google(key="XXXXX") # your key here
+
+## ---- echo=FALSE---------------------------------------------------------
+#devtools::install_github("dkahle/ggmap")
+#library(ggmap)
+#register_google(key="AIzXXXXXXXXXXXXXXXXXXXXXxPSE") # your key here
+register_google(key="AIzaSyDHsYNZmqmTNvFn36tq470iRyXgQEU-PSE")
+
+## ------------------------------------------------------------------------
 sf_map <- get_map("San Francisco, CA")  
 
 ## ------------------------------------------------------------------------
@@ -93,7 +103,7 @@ ggmap(sf_basemap_lite) +
 
 ## ---- eval=F-------------------------------------------------------------
 ## # Let's look at last 5 years
-## sfhomes2010_2015 <- subset(sfhomes, as.numeric(SalesYear) > 2009)
+## sfhomes2010_15 <- subset(sfhomes, as.numeric(SalesYear) > 2009)
 ## 
 ## ggmap(sf_basemap_lite) +
 ##   geom_point(aes(lon, lat, col=totvalue), data = sfhomes2010_15 )  +
@@ -151,7 +161,7 @@ str(sfhomes15_sp) # the SPDF
 ## head(sfhomes15_sp$lon)
 ## 
 ## sfhomes15_sp@proj4string
-## proj4strings(sfhomes15_sp)
+## proj4string(sfhomes15_sp)
 ## 
 
 ## ------------------------------------------------------------------------
@@ -358,29 +368,3 @@ tm_shape(us_states_5070) + tm_polygons(col="beige") +
 ## library(knitr)
 ## purl("r-geospatial-workshop-sp2018-pt1.Rmd", output = "scripts/r-geospatial-workshop-sp2018-pt1.r", documentation = 1)
 
-###
-# > sessionInfo()
-# R version 3.4.1 (2017-06-30)
-# Platform: x86_64-apple-darwin15.6.0 (64-bit)
-# Running under: macOS Sierra 10.12.6
-# 
-# Matrix products: default
-# BLAS: /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
-# LAPACK: /Library/Frameworks/R.framework/Versions/3.4/Resources/lib/libRlapack.dylib
-# 
-# locale:
-#   [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
-# 
-# attached base packages:
-#   [1] stats     graphics  grDevices utils     datasets  methods   base     
-# 
-# other attached packages:
-#   [1] bindrcpp_0.2  ggmap_2.7     ggplot2_2.2.1
-# 
-# loaded via a namespace (and not attached):
-#   [1] Rcpp_0.12.14      bindr_0.1         compiler_3.4.1    plyr_1.8.4        bitops_1.0-6      tools_3.4.1       digest_0.6.13     memoise_1.1.0    
-# [9] evaluate_0.10.1   tibble_1.3.4      gtable_0.2.0      lattice_0.20-35   pkgconfig_2.0.1   png_0.1-7         rlang_0.1.4.9000  mapproj_1.2-5    
-# [17] yaml_2.1.16       proto_1.0.0       withr_2.1.1       stringr_1.2.0     dplyr_0.7.4       knitr_1.17        devtools_1.13.4   RgoogleMaps_1.4.1
-# [25] maps_3.2.0        rprojroot_1.3-1   grid_3.4.1        glue_1.2.0        R6_2.2.2          jpeg_0.1-8        rmarkdown_1.8     sp_1.2-5         
-# [33] reshape2_1.4.3    magrittr_1.5      backports_1.1.2   scales_0.5.0      htmltools_0.3.6   assertthat_0.2.0  colorspace_1.3-2  geosphere_1.5-7  
-# [41] stringi_1.1.6     lazyeval_0.2.1    munsell_0.4.3     rjson_0.2.15     
