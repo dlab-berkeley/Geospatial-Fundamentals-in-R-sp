@@ -618,7 +618,7 @@ See this [StackOverflow discussion](https://stackoverflow.com/questions/34402979
 #devtools::install_github("dkahle/ggmap")
 #library(ggmap)
 #register_google(key="AIzXXXXXXXXXXXXXXXXXXXXXxPSE") # your key here
-register_google(key="AIzaSyDHsYNZmqmTNvFn36tq470iRyXgQEU-PSE")
+
 ```
 
 ##  get_map
