@@ -118,7 +118,7 @@ library(ggmap)
 #devtools::install_github("dkahle/ggmap")
 #library(ggmap)
 #register_google(key="AIzXXXXXXXXXXXXXXXXXXXXXxPSE") # your key here
-register_google(key="AIzaSyDHsYNZmqmTNvFn36tq470iRyXgQEU-PSE")
+
 
 ## ---- eval=F-------------------------------------------------------------
 ## sf_map <- get_map("San Francisco, CA")
