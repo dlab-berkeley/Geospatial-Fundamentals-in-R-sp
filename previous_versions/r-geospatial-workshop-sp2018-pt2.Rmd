@@ -1,0 +1,1132 @@
+---
+title: "Geospatial Data & Maps in R, pt 2"
+author: "Patty Frontiera"
+date: "Spring 2018"
+output: 
+  ioslides_presentation:
+    widescreen: true
+    smaller: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Part II Overview
+
+Deep Dive into Data Driven Maps
+
+- pin or dot maps
+- category maps
+- proportional symbol & color maps
+- graduated symbol & color maps
+- Choropleth maps
+
+Taste of Spatial Analysis
+
+## Part II Prep
+
+- Open RStudio & a Script file
+
+- Set working directory
+
+- Load Libraries  (`rgeos` new - install if needed)
+
+- Load our data from part 1
+
+- Open the slide deck to follow along:  http://bit.ly/geospatial_workshop_part2
+
+
+## R Spatial Libraries
+
+Let's load the R libraries we will use
+
+```{r, eval=F}
+library(sp)
+library(rgdal)
+library(rgeos)
+library(tmap)
+library(RColorBrewer)
+library(ggplot2)
+library(ggmap)
+## leaflet, ggmap, maptools, may be needed
+```
+
+```{r, echo=F}
+library(sp)
+library(rgdal)
+library(rgeos)
+library(tmap)
+library(RColorBrewer)
+library(ggplot2)
+library(ggmap)
+```
+
+## SF Properties 2015
+
+Load the data if it is not already loaded
+
+```{r}
+# setwd()
+sfhomes <- read.csv('data/sf_properties_25ksample.csv')
+sfhomes15 <- subset(sfhomes, as.numeric(SalesYear) == 2015)
+class(sfhomes15)
+sfhomes15_sp <- sfhomes15
+coordinates(sfhomes15_sp) <- c('lon','lat') # ORDER MATTERS!!
+proj4string(sfhomes15_sp) <- CRS("+init=epsg:4326")
+```
+
+## SF Boundary
+
+```{r}
+
+sfboundary <- readOGR(dsn="data",layer="sf_boundary")
+sfboundary_lonlat <- spTransform(sfboundary, CRS("+init=epsg:4326"))
+
+```
+
+
+# Finishing up Part I
+
+# tmap and CRSs
+
+## tmap and CRSs
+
+We have been mapping data in WGS84 (lon/lat) CRS.
+
+Not a great idea for static maps of larger areas as distortion becomes evident.
+
+Let's explore that distortion and how to address with `tmap`
+
+## US States
+
+Let's load and map data for US states.
+
+Data are in the file `data/us_states_pop.shp`
+
+
+## Challenge
+
+Use `readOGR` to load `data/us_states_pop.shp` into an `sp` object named `us_states`
+
+## Read in & plot the Data
+```{r}
+us_states <- readOGR("./data", "us_states_pop")
+```
+
+## Take a quick look
+
+```{r}
+qtm(us_states)
+```
+
+## Questions
+
+Review `us_states` with the `sp` commands we used earlier and / or explore in the Environment window.
+
+- What type of `sp` object is `us_states`
+
+- How many features does it contain?
+
+- How many attributes describe those features?
+
+- What is the CRS?
+
+
+## Customizing the display
+
+```{r}
+tm_shape(us_states) + tm_polygons(col="grey", border.col = "white")
+```
+
+## CRS and Shape
+
+Notice anything odd about shape of USA?
+```{r, echo=F}
+tm_shape(us_states) + tm_polygons(col="grey", border.col = "white")
+```
+
+## Dynamically Transforming the CRS
+
+```{r}
+tm_shape(us_states, projection="+init=epsg:5070") + tm_polygons(col="grey", border.col = "white")
+```
+
+
+## What's happening here?
+
+```{r}
+tm_shape(us_states, projection="+init=epsg:5070") + tm_polygons(col="grey", border.col = "white") +
+tm_shape(us_states) + tm_borders(col="purple") 
+```
+
+
+## Dynamic CRS Transformations
+
+Also called `On-the-fly reprojection` in ArcGIS & QGIS
+
+Very cool!
+
+BUT, if you want to use data in a different CRS it is best to transform it.
+
+## Challenge
+
+* Transform the `us_states` data to the USA Contiguous Albers CRS (5070),
+
+* Save output as a new `SpatialPolygonsDataFrame` called `us_states_5070`
+
+## us_states_5070
+```{r}
+us_states_5070 <- spTransform(us_states, CRS("+init=epsg:5070"))
+
+```
+
+## Plotting the Transformed Data
+
+```{r}
+tm_shape(us_states_5070) + tm_polygons(col="beige") +
+  tm_shape(us_states) + tm_borders(col="purple")
+```
+
+# Questions?
+
+# Data Driven Maps
+
+## Data Driven Maps
+
+Also called `thematic` maps or data maps
+
+Use data values to determine symbology
+
+Use symbology to convey data values / meaning
+
+Important for all phases of the research process, from exploratory analysis through reporting results.
+
+# Dot or Pin Maps
+
+## Dot or Pin Maps
+
+Show location
+
+```{r}
+tm_shape(sfboundary_lonlat) + tm_polygons(col="white", border.col="black") + 
+   tm_shape(sfhomes15_sp) + tm_dots(col="black", size=.15)
+```
+
+# Category Maps
+
+## Category Maps
+
+Show location by feature type - distinguished by color or symbol
+
+```{r}
+tm_shape(sfboundary_lonlat) + tm_polygons(col="white", border.col="black") + 
+   tm_shape(sfhomes15_sp) + tm_dots(col="Neighborhood", size=.15, legend.show = F)
+```
+
+## Keys to Great Data Maps
+
+1. Color Palettes
+
+2. Data Classification
+
+# Color
+
+## RColorBrewer Package
+
+`RColorBrewer` is widely used to select a pre-defined color palette. 
+
+- Or you can manually specify a color palette
+
+`RColorBrewer` is used by `ggplot` as well as `tmap` and other plotting libraries.
+
+For more info see `?RColorBrewer` or [colorbrewer.org](http://colorbrewer2.org/)
+
+```{r }
+library(RColorBrewer)
+```
+
+## Exploring Brewer Palettes
+
+There are three types of color palettes
+
+1. qualitative
+
+2. sequential
+
+3. divergent
+
+See `?brewer.pal` for details
+
+## Qualitative Color Palettes
+
+Complementary colors that emphasize different categories not magnitudes or order.
+
+```{r}
+display.brewer.all(type="qual")
+```
+
+## Sequential Color Palettes
+
+Light to dark shades of the same or complimentary colors to imply order, e.g. higher to lower ranks or values
+
+```{r}
+display.brewer.all(type="seq")
+```
+
+## Divergent Color Palettes
+
+Two contrasting sequential color palettes at either end to emphasize outliers with a lighter palette in the middle to reveal trends.
+
+```{r}
+display.brewer.all(type="div")
+```
+
+
+## Using a Color Palette
+
+
+```{r}
+tm_shape(sfboundary_lonlat) + tm_polygons(col="white", border.col="black") + 
+   tm_shape(sfhomes15_sp) + tm_dots(col="totvalue", palette="BuPu", size=.15) + 
+   tm_layout(inner.margins=c(.05,.05, .15, .15))
+```
+
+## Challenge
+
+Redo the previous map of `totvalue` using a different `sequential` color palette.
+
+Redo the `Neighborhood` map with a `sequential` color palette.
+
+Redo the `totvalue` map with a `qualitative` color palette.
+
+##
+
+Redo the map of `totvalue` using a different `sequential` color palette.
+
+```{r}
+tm_shape(sfboundary_lonlat) + tm_polygons(col="white", border.col="black") + 
+   tm_shape(sfhomes15_sp) + tm_dots(col="totvalue", palette="YlGnBu", size=.15)
+```
+
+##
+
+Redo the `Neighborhood` map with a `sequential` color palette.
+
+```{r}
+tm_shape(sfboundary_lonlat) + tm_polygons(col="white", border.col="black") + 
+   tm_shape(sfhomes15_sp) + tm_dots(col="Neighborhood", size=.15, legend.show = T, palette="BuPu")
+```
+
+
+##
+
+Redo the map of `totvalue` using a different `sequential` color palette.
+
+```{r}
+tm_shape(sfboundary_lonlat) + tm_polygons(col="white", border.col="black") + 
+   tm_shape(sfhomes15_sp) + tm_dots(col="totvalue", palette="Set1", size=.15)
+```
+
+## Just because it ain't easy
+
+<img src="http://www.norc.org/Blog/Documents/Ned7.jpg" width="600px"></img>
+
+Pandora: favorite electronic dance music tracks by state from
+[“Bad” Maps or Carto-Ineptitude](http://www.norc.org/Blog/pages/sparks-post.aspx?BlogId=43)
+
+## Map Symbology
+
+Symboloy is associated with data in a few ways:
+
+- all one color, size or shape
+
+- unique symbol for each value
+
+- scaled to the range of values (proportional)
+    - this is also called "unclassified"
+
+## Unclassified Data - Problems
+
+Unclassified maps scale full range of values to color palette
+
+- Great for exploring trends and outliers, 
+
+- but hard to interpret specific data values.
+
+- The eye can only differentiate a few colors.
+
+## Data Classification
+
+Numerical data values are grouped into bins using a classification method
+- usually 5 bins
+
+The choice of classification method greatly influences the appearance of the map 
+- and thus the interpretation of the data
+
+Most mapping software uses `quantile` classification by default
+- creates the best distribution of colors to data values.
+
+## Data Classification Methods
+
+Common methods for binning data into a set of classes include:
+
+- `equal interval`: classes the data into bins of equal data ranges, e.g. 10-20, 20-30, 30-40.
+
+- `quantile`: classes the data into bins with an equal number of data observations. This is the default for most mapping software.
+
+- `fisher/jenks/natural breaks`: classes data into bins that minmizie within group variance and maximize between group variance.
+
+- `standard devation`: classes emphasize outliers by classing data into bins based on standard deviations around the mean, eg -2 to + 2 SDs.
+
+- `manual`: class breaks are hard coded by the data analyst
+
+## Data classification in `tmap`
+
+`tmap` uses the classificaiton methods in the `classIntervals` package
+
+The classification method is set by the `style=` parameter 
+
+**See** `?tm_polygons` or `tm_dots` for keyword options
+
+
+## tmap data classification - Quantiles
+
+```{r}
+tm_shape(sfboundary_lonlat) + tm_polygons(col="grey", border.col="black") + 
+   tm_shape(sfhomes15_sp) + tm_dots(col="totvalue", style="quantile", size=0.15)
+```   
+   
+## tmap data classification - Equal
+
+```{r}
+tm_shape(sfboundary_lonlat) + tm_polygons(col="grey", border.col="black") + 
+   tm_shape(sfhomes15_sp) + tm_dots(col="totvalue", size=0.15, style="fisher")
+```
+
+## Comparing Quantile & Equal
+
+```{r}
+sfhomes15_sp$totvalue2 <- sfhomes15_sp$totvalue
+tm_shape(sfboundary_lonlat) + tm_polygons(col="grey", border.col="black") + 
+   tm_shape(sfhomes15_sp) + tm_dots(col=c("totvalue","totvalue2"), size=0.15, style=c("quantile","equal") )
+```
+
+## Comparing Equal and Unclassified
+
+```{r}
+sfhomes15_sp$totvalue2 <- sfhomes15_sp$totvalue
+tm_shape(sfboundary_lonlat) + tm_polygons(col="grey", border.col="black") + 
+   tm_shape(sfhomes15_sp) + tm_dots(col=c("totvalue","totvalue2"), size=0.15, style=c("equal","cont") )
+```
+
+
+## Power
+
+Data driven mapping is most powerful when dataclassification & color palettes are both used effectively
+
+## Challenge
+
+Create a few maps of `totvalue` experimenting with different classification schemes and color palettes.
+
+
+## Terminology
+
+`Graduated Color Maps` - colors mapped to classified data values
+
+`Graduated Symbol Maps` - symbol size mapped to classified data values
+
+`Proportonal Color or Symbol Maps` - colors orsize scalled to all data values
+
+
+# Choropleth Maps
+
+## Choropleth maps
+
+`Color areas by data values`
+
+Fun name for a type of data map
+
+Sometimes called `heatmap` or `thematic map`
+
+Most common type of data map
+
+## Choropleth Map of State Population
+
+```{r}
+tm_shape(us_states_5070) + tm_polygons(col="POPULATION")
+```
+
+##  Moving the legend
+
+```{r}
+tm_shape(us_states_5070) + tm_polygons(col="POPULATION") +  tm_layout(legend.position=c("left","bottom"))
+```
+
+## Setting the classification style
+
+```{r}
+tm_shape(us_states_5070) + tm_polygons(col="POPULATION", style="jenks")
+```
+
+## Challenge
+
+Make a map that compares Population and `popdens` using the `jenks` classification
+
+Change the color palette
+
+Move the legend
+
+*What state has the highest population density? Population?*
+
+## Does this tell us?
+```{r}
+tm_shape(us_states_5070) + 
+  tm_polygons(col=c("POPULATION","popdens"), style="jenks", palette="BuPu" ) +
+  tm_layout(legend.position=c("left","bottom"))
+```
+
+## Mapping Polygons
+
+Often the different sizes of polygons distract from data values
+
+Our eyes are drawn to large areas like CA or Texas biasing the interpretation.
+
+Often data aggregated to polygons are mapped as points!
+
+## What state has the highest pop density?
+
+*What type of map is this?*
+```{r, echo=F}
+tm_shape(us_states_5070) + tm_polygons(col="white", border.alpha = 0.5) + 
+  tm_shape(us_states_5070) + tm_symbols(col="popdens", style="jenks") +
+  tm_layout(legend.position=c("left","bottom"))
+```
+
+
+## Graduated Symbol Map
+```{r}
+tm_shape(us_states_5070) + tm_polygons(col="white", border.alpha = 0.5) + 
+  tm_shape(us_states_5070) + tm_symbols(size="POPULATION", style="jenks", col="purple") +
+  tm_layout(legend.position=c("left","bottom"))
+```
+
+## Challenge
+
+Recreate the `popdens` map as an interactive `tmap`.
+
+Then click to find the name of the most densely populated state
+
+##
+```{r, echo=F}
+tmap_mode("view")
+tm_shape(us_states_5070) + tm_polygons(col="white", border.alpha = 0.5) + 
+  tm_shape(us_states_5070) + tm_symbols(col="popdens", style="jenks") +
+  tm_layout(legend.position=c("left","bottom"))
+```
+
+## Add Popup Content
+
+`?tmap_mode`
+
+```{r, eval=F}
+
+tmap_mode("view")
+tm_shape(us_states_5070) + tm_polygons(col="white", border.alpha = 0.5) + 
+tm_shape(us_states_5070) + tm_symbols(col="popdens", style="jenks",
+     popup.vars=c("NAME","POPULATION","popdens")) +
+  tm_layout(legend.position=c("left","bottom")) 
+ 
+```
+
+
+## Plot Mode
+
+Return to plot mode
+
+```{r}
+tmap_mode('plot')
+```
+
+## `save_tmap`
+
+You can save static and interactive maps with tm_save
+
+See: `?save_tmap` for details
+
+```{r, eval=F}
+map1 <- tm_shape(uspop_5070) + tm_polygons(col="POPULATION", style="jenks")
+save_tmap(map1, "tmap_choropleth.png", height=4) # Static image file
+save_tmap(map1, "tmap_choropleth.html") # interactive web map
+```
+
+##
+```{r}
+map1 <- tm_shape(us_states_5070) + tm_polygons(col="POPULATION", style="jenks")
+map1
+```
+## Sharing your interactive Map
+
+- Save & view locally or email
+- Github
+- Web server
+- [RPubs](http://rpubs.com/)
+
+
+## Doing more with `tmap`
+
+- See `vignette("tmap-modes")` for more on interactive maps.
+
+- [Stackoverflow `tmap`](http://stackoverflow.com/tags/tmap)
+
+- [tmap github repo](https://github.com/mtennekes/tmap) (readme file, demo and example folders)
+
+
+## `leaflet` Package
+ 
+There are several R packages that output leaflet maps.
+
+Use the `leaflet` package for more customized leaflet maps
+
+Highly recommend if you want to make interactive maps.
+
+See the [RStudio Leaflet tutorial](https://rstudio.github.io/leaflet).
+
+
+# Questions?
+
+# Break...
+
+
+# Spatial Analysis
+
+## Spatial Analysis
+
+Spatial Analysis begins with an exploration of the data. 
+
+1. Mapping to see its location and distribution
+
+2. Asking questions of, or querying, your data. 
+
+3. Cleaning & reshaping the data
+
+4. Applying analysis methods
+
+5. Mapping analysis results
+
+6. Repeat as needed
+
+
+## Spatial Queries
+
+There are two key types of spatial queries
+
+- spatial measurement queries, 
+    - e.g. area, length, distance
+
+- spatial relationship queries, 
+    - e.g. what locations in A are also in B.
+
+These types are often combined, e.g.
+
+- How much of region A that is within region B?
+
+## Our Questions
+
+So far we have explored housing values for the city of San Francisco. 
+
+The data set consists of a lot of dissaggregated features represented as points.
+
+In this section we will
+
+- determine the census tract id (GEOID) for each property
+- calculate the average property value per neighborhood.
+- determine the average property value within walking dist of coit tower
+
+
+
+## SF Census Tracts
+
+Use `readOGR` to load the shapefile `sf_pop_by_tracts`
+
+- it's in the `data` folder
+
+Then take a look at the data.
+
+- What type of `sp` object is it?
+- What is its CRS?
+- What column contains the population data?
+
+## SF Census Tracts
+```{r}
+sftracts <- readOGR(dsn="./data", layer="sf_pop_by_tracts")
+class(sftracts)
+proj4string(sftracts)
+summary(sftracts)
+head(sftracts@data)
+```
+
+## Make a Quick Plot
+
+```{r}
+plot(sftracts)  # or qtm(sftracts)
+```
+
+
+## Remove the Farallon Islands tract
+
+You can subset a SPDF just like a DF
+
+Select all features with population > 0
+
+Then replot the map
+
+## Subset
+
+```{r}
+sftracts<- subset(sftracts, pop14 > 0)
+plot(sftracts)
+```
+
+## What Tract is each property in?
+
+We need to **spatially join** the `sftracts` and `sfhomes15_sp` to answer this.
+
+
+## Spatial Join
+
+A spatial join associates rows of data in one object with rows in another object based on the spatial relationship between the two objects.
+
+A spatial join is based on the comparison of two sets of geometries in the same coordinate space. 
+
+This is called a **spatial overlay**.
+
+ 
+
+## Spatial overlay
+
+Spatial overlay operations in R are implemented using the `over` function in the `SP` and `rGEOS` libraries. 
+
+Point-polygon overlay use SP::over
+
+SpatialLines objects, or pairs of SpatialPolygons require package `rgeos`, and use `gIntersects`. 
+
+That's likely more detail than you need right now but the *point* here is that `rgeos` is the go-to library for vector geometry processing in R.
+
+##  `over`
+
+You can interperet `over(x,y)`  as:
+
+- for each feature in X give me information about the first feature in Y at the corresponding location. 
+
+You can interperet `over(x,y, returnList=TRUE)`  as:
+
+- for each feature in X give me information about the all features in Y at the corresponding location. 
+
+See `?over` for details.
+
+
+## So here goes...
+
+*In what tract is each SF property is located?* 
+
+```{r, eval=F}
+homes_with_tracts <- over(sfhomes15_sp, sftracts)
+```
+
+## Did it work?
+
+If not, why not?
+
+# Coordinate reference systems (CRS) must be the same!
+
+
+## CRSs must be the same
+
+The `over` function, like almost all spatial analysis functions, requires that both data sets be spatial objects (they are) with the same coordinate reference system (CRS). Let's investigate
+
+```{r, eval=F}
+# What is the CRS of the property data?
+proj4string(sfhomes15_sp)
+
+# What is the CRS of the census tracts?
+proj4string(sftracts)
+```
+
+## Geographic CRS
+
+Both data are in a geographic CRS but they are different 
+- WGS84 (sfhomes15_sp) and NAD83 (sftracts)
+
+1. Transform the CRS of `sftracts` to that of `sfhomes15_sp`
+
+2. Then test that they are identical
+
+
+## Transform the CRS
+
+```{r}
+# Transform the CRS for tracts to be the same as that for sfhomes15_sp
+sftracts2 <- spTransform(sftracts, CRS(proj4string(sfhomes15_sp)))
+
+# make sure the CRSs are the same
+proj4string(sftracts2) == proj4string(sfhomes15_sp) 
+```
+
+Now let's try that overlay operation again
+
+## Try 2
+
+```{r}
+# Now try the overlay operation again
+# Identify the tract for each property in sfhomes15_sp
+homes_with_tracts <- over(sfhomes15_sp, sftracts2)
+```
+
+## Questions
+
+What is our output? Does it answer our question?
+
+What type of data object did the over function return?
+
+```{r, eval=F}
+head(homes_with_tracts) # take a look at the output
+class(homes_with_tracts)
+nrow(homes_with_tracts)
+nrow(sftracts2)
+nrow(sfhomes15_sp)
+```
+
+
+## `over` discussion
+
+Our output *homes_with_tracts* is a data frame that contains 
+- the id of each property in `sfhomes15_sp`
+- all of the columns from `sftracts2@data` including the census tract id (GEOID) 
+
+So we are close to answering our question.
+
+But for the data to be useful we need 
+- to link (or join) the GEOID to the `sfhomes15_sp` object
+
+## Keep just the GEOID column
+
+```{r}
+
+homes_with_tracts <- homes_with_tracts[,c("GEOID")]
+```
+
+## Add the the DF to the SPDF
+
+We can use the base cbind (column bind) command to join the data frame to the SpatialPointsDataFrame.
+
+*The successful use of this function requires the data to be in the same order!*
+
+```{r}
+
+sfhomes15_sp@data <-cbind(sfhomes15_sp@data, homes_with_tracts)
+## NOTE - binding to the @data slot!
+
+# Review and note the change
+# head(sfhomes15_sp@data)
+```
+
+## Check in `tmap`
+
+Map the data in tmap interactive mode 
+
+##
+
+```{r}
+tmap_mode("view")
+tm_shape(sftracts2) + tm_polygons(col="beige") + tm_shape(sfhomes15_sp) + 
+  tm_dots(col="red")
+```
+
+## Evaluation
+
+Did the `over` command successfully associate the census tract GEIOD with each property?
+
+If yes, you now could link the property data to census demographic data by GEOID.
+
+
+## Point-in-Polygon Queries
+
+We just did what's called a type of spatial overlay query called a `Point-in-Polygon` query. 
+
+We asked "In what tract is each property located?". 
+
+## WOW
+
+Data linkage via space!
+
+## The Census Tract Perspective
+
+We now know the tract for each property.
+
+Now let's think about this question from the tract perspective. 
+
+Let's ask the question
+
+- What is the average propety value per tract?
+
+
+
+## Non-Spatial Aggregation
+
+Since we joined GEOID to each property we can use the non-spatial `aggregate` function to compute the mean of totvalues for each GEOID.
+
+```{r}
+
+mean_totvalue_by_tract <- aggregate(totvalue ~ GEOID, sfhomes15_sp, mean)
+
+# Take a look
+head(mean_totvalue_by_tract)
+
+```
+
+## Rename the column!
+
+So that it is clear that it is the mean for the tract!
+```{r}
+colnames(mean_totvalue_by_tract) <- c("GEOID","mean_totvalue")
+head(mean_totvalue_by_tract)
+```
+## Map Tracts by Mean Property Value
+
+However, we can't map our data frame of mean_totvalues by GEOID.
+
+We can use `sp::merge` to join the `mean_totvalue_by_tract` DF to the `sftracts2` SPDF.
+
+We should make sure that
+
+- the number of rows in `sftracts2` and `mean_totvalue_by_tract` are the same
+
+- they share a column of common values - GEOID
+
+
+## Join by Attribute
+
+When we join two data objects based on values in a column it is called a data table `join by attribute`.
+
+The sp:merge makes this syntax simple for `sp` objects with @data slots.
+
+```{r}
+
+sftracts2<- merge(sftracts2, mean_totvalue_by_tract, 
+                  by.x="GEOID", by.y="GEOID")
+```
+
+IMPORTANT: DO NOT merge the DF to the @data slot! but rather to the SPDF!
+
+```
+## Don't do this:
+ sftracts2@data <- merge(sftracts2@data, mean_totvalue_by_tract,
+              by.x="GEOID", by.y="GEOID")
+```
+## Take a look
+
+```{r}
+head(sftracts2@data)
+```
+
+
+## Challenge
+
+Create an interactive tmap of census tracts colored by mean_totvalue
+
+##
+```{r}
+tm_shape(sftracts2) + tm_polygons(col="mean_totvalue", style="jenks")
+```
+
+## Aggregating Data Spatially
+
+Above we asked "what is the census tract id for each property?"
+
+We then used the non-spatial `aggregate` function to calculate the mean totvalue for each tract.
+
+Finally, we did a spatial `merge` to join this results to the census tracts.
+
+However, we can ask the same from the tract perspective using `sp::aggregate`
+
+## sp::aggregate
+
+Compute mean totvalue by census tract
+
+- what class is the output object?
+
+```{r}
+
+tracts_with_property_count <- aggregate(x = sfhomes15_sp["totvalue"], 
+                                        by = sftracts2, FUN = mean)
+```
+
+## Examine output
+
+```{r}
+class(tracts_with_property_count)
+head(tracts_with_property_count@data)
+plot(tracts_with_property_count)
+```
+
+## Add the GEOID
+
+```{r}
+tracts_with_property_count$GEOID <- sftracts2$GEOID
+```
+
+## Check it
+
+Did both methods get the same result? 
+
+Check the mean totvalue for the same GEOID in each SPDF
+
+```{r}
+
+tracts_with_property_count[tracts_with_property_count$GEOID == "06075010700", ]$totvalue 
+
+sftracts2[sftracts2$GEOID == "06075010700",]$mean_totvalue
+
+```
+
+# Distance queries
+
+## Distance queries
+
+Many methods of spatial analysis are based on distance queries.
+
+For example, point pattern analysis considers the distance between features to determine whether or not they are clustered.
+
+We can also use distance as a way to select features spatially.
+
+## Distance
+
+Let's compute the mean  property value within 1 km of Coit Tower
+
+First, we need to know where Coit Tower is. How can we find that out?
+
+## Geocoding a place name with ggmap
+
+```{r}
+library(ggmap)
+library(ggplot2)
+
+coit_tower <- geocode('Coit Tower, San Francisco, CA')
+
+```
+
+
+
+## Selecting by Distance
+
+In order to select properties with 1KM of Coit Tower we
+- create a 1KM radius buffer polygon around the Coit Tower point
+
+We then do a point-in-polygonn operation to either count the number of properties within the buffer or compute the mean totvalue.
+
+## rgeos
+
+`rgeos` is another powerful and widely used library for working with geospatial data.
+
+It is the muscle for 
+- creating new geometries from exisiting ones
+- calculating spatial metrics like area, length, distance
+- calculating the spatial relationship between two geometries.
+
+We can use the `rgeos::gBuffer` function to create our buffer polygon
+
+## Can you understand this code?
+```{r, eval=F}
+
+coordinates(coit_tower) <- c("lon","lat")
+proj4string(coit_tower)<- CRS("+init=epsg:4326")
+
+coit_tower_utm <- spTransform(coit_tower, CRS("+init=epsg:26910"))
+
+library(rgeos)
+coit_km_buffer <- gBuffer(coit_tower_utm, width=1000)
+
+```
+
+## Map the Buffer
+
+```{r, eval=F}
+
+tm_shape(sfhomes15_sp) + tm_dots(col="blue") +
+tm_shape(coit_km_buffer) + tm_borders(col="red", lwd=2) +
+tm_shape(coit_tower_utm) + tm_dots(col="red")
+```
+
+## Question
+
+Now that we have our buffer polygon, how can we compute the mean totvalue of properties within the buffer?
+
+## Spatially Aggregate by Buffer
+
+```{r, eval=F}
+buff_mean <- aggregate(x = sfhomes15_sp["totvalue"], 
+                       by = coit_km_buffer, FUN = mean)
+```
+
+## CRS....
+```{r, eval=F}
+
+coit_buffer_lonlat <- spTransform(coit_km_buffer, 
+                                  CRS(proj4string(sfhomes15_sp)))
+
+buff_mean <- aggregate(x = sfhomes15_sp["totvalue"], 
+                       by = coit_buffer_lonlat, FUN = mean)
+
+```
+
+## Check Results
+
+What is the mean property value within 1KM of Coit Tower in 2015?
+
+`View(buff_mean)`
+
+## Questions?
+
+
+## Summary
+
+That was a whirlwind tour of just some of the methods of spatial analysis.
+
+There was a lot we didn't and can't cover.
+
+Raster data is a another major topic!
+- but the `raster` package is the key
+
+## Spring semester classes
+
+- Geog 88: Geography & Data Science
+- Geog 187: Geographic Info Analysis
+- LA221: Quantitative Methods in Environmental Planning
+- CyPlan 204C: GIS for City Planning
+
+
+## Selected  References
+
+- [Spatial Data in R tutorial](https://cengel.github.io/rspatial)
+- [An Introduction to Spatial Data Analysis and Visualisation in R](https://data.cdrc.ac.uk/tutorial/an-introduction-to-spatial-data-analysis-and-visualisation-in-r)
+- [NEON Spatial Data tutorials](http://neondataskills.org/tutorial-series/)
+- [GIS in R](http://www.nickeubank.com/gis-in-r)
+- [Spatial Data Analysis and Modeling in R](http://www.rspatial.org/index.html)
+- [Intro to visualizing Spatial Dat in R](https://github.com/Robinlovelace/Creating-maps-in-R)
+- [RStudio Leaflet in R tutorial](https://rstudio.github.io/leaflet)
+- [Blog on mapping census data in R](http://zevross.com/blog/2015/10/14/manipulating-and-mapping-us-census-data-in-r-using-the-acs-tigris-and-leaflet-packages-3/)
+- [Geocomputation in R online book featuring sf Package](http://robinlovelace.net/geocompr/ )
+- [CRAN Task View: Analysis of Spatial Data](https://cran.r-project.org/web/views/Spatial.html)
+- http://rstudio-pubs-static.s3.amazonaws.com/6577_3b66f8d8f4984fb2807e91224defa854.html
+
+
+## Output code to script
+
+```{r, eval=F}
+library(knitr)
+purl("r-geospatial-workshop-f2017-pt2.Rmd", output = "scripts/r-geospatial-workshop-f2017-pt2.r", documentation = 1)
+```
+
+
