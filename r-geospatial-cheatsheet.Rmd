@@ -37,8 +37,8 @@ sf_boundary <- readOGR("./data", "sf_boundary")
 Read in a CSV file of point data</td>
 <td>
 ```{r}
-landmarks <- read.csv("./data/landmarks.csv")
-head(landmarks,2) # take a look
+bart_stations <- read.csv("./data/bart.csv")
+head(bart_stations,2) # take a look
 ```
 </td>
 </tr>
@@ -46,7 +46,7 @@ head(landmarks,2) # take a look
 <td>Convert a data frame to a SpatialPointsDataFrame</td>
 <td>
 ```{r}
-coordinates(landmarks) <- c("X", "Y")
+coordinates(bart_stations) <- c("X", "Y")
 ```
 </td>
 </tr>
@@ -55,7 +55,7 @@ coordinates(landmarks) <- c("X", "Y")
 <td>
 ```{r}
 proj4string(sf_boundary)
-proj4string(landmarks)
+proj4string(bart_stations)
 ```
 </td>
 </tr>
@@ -66,7 +66,7 @@ Set (define) the CRS
 </td>
 <td>
 ```{r}
-proj4string(landmarks) <- CRS("+init=epsg:3857") 
+proj4string(bart_stations) <- CRS("+init=epsg:4326") 
 #
 # or
 #
@@ -79,11 +79,11 @@ proj4string(landmarks) <- CRS("+init=epsg:3857")
 <td> Transform (reproject) the CRSs to match</td>
 <td>
 ```{r}
-landmarks2 <- spTransform(landmarks, CRS(proj4string(sf_boundary)))
+bart_stations2 <- spTransform(bart_stations, CRS(proj4string(sf_boundary)))
 #
 # or
 #
-# landmarks2 <- spTransform(landmarks, CRS("+init=epsg:26910"))
+# bart_stations2 <- spTransform(landmarks, CRS("+init=epsg:26910"))
 #
 ```
 
@@ -96,7 +96,7 @@ Make a quick plot of the data
 <td>
 ```{r}
 plot(sf_boundary)
-points(landmarks2)
+points(bart_stations2)
 ```
 </td>
 </tr>

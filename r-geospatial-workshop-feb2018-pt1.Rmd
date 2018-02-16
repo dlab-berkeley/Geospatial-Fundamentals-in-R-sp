@@ -1834,6 +1834,28 @@ map1 #  in console
 
 # Questions?
 
+## Save data for next workshop
+
+```{r, eval=F}
+
+# write transformed data objects to a new shapefile 
+coordinates(bart) <- c("X","Y")
+proj4string(bart) <- CRS(proj4string(sfboundary_lonlat))
+
+save_layers <- c("sfhomes15_sp", "sfboundary_lonlat", "highways_lonlat", "bart", "landmarks")
+for (i in save_layers){
+  print(paste("Saving [",i,"] to file..."))
+  writeOGR(get(i), 
+          dsn = "saved_data", 
+          layer = i, 
+          driver="ESRI Shapefile")
+}
+# is it there?
+dir("saved_data")
+
+```
+
+
 ## Recap
 
 - Geospatial Data in R
@@ -1846,6 +1868,7 @@ map1 #  in console
 - Geospatial Maps with `tmap`
 
 # End of Part I
+
 
 ##
 
