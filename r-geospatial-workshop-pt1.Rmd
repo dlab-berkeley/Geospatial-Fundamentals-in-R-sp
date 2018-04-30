@@ -6,19 +6,19 @@ output:  ioslides_presentation
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = T)
+knitr::opts_chunk$set(echo = TRUE)
 ```
+
 
 ## Workshop Prep
 
 1. Open <https://github.com/dlab-geo/r-geospatial-workshop>
-
-- Download & unzip the zip file
-- Upzip the zip file and make a note of the folder in which it is located
+    - Download & unzip the zip file
+    - Make a note of the folder in which it is located
 
 2. Start **RStudio** and open a new script file
 
-3. Install required libraries in RStudio - if you do not have these installed
+3. Install required libraries in RStudio - if you do not have them already
 
 ```{r, eval=F}
 install.packages(
@@ -57,37 +57,20 @@ Who are you?
 
 Why are you here?
 
+## Follow Along
 
-## Getting Started
+Open one of the tutorial files in a web browser
 
-1. Get the workshop files
+Slides
+`r-geospatial-workshop-pt1.html `
 
-https://github.com/dlab-geo/r-geospatial-workshop
+Tutorial
+`r-geospatial-workshop-pt1-tutorial.html `
 
-- Click *Clone or Download* and download the zip file
+Raw Code
+`scripts/r-geospatial-workshop-pt1.R`
 
-- Upzip the zip file and make a note of the folder in which it is located
-
-## Getting Started
-
-2. Open RStudio and start a new script
-
-3. Follow along by opening `r-geospatial-workshop-pt1-feb2018.html`
-
-## Getting Started
-
-4. In RStudio, install required libraries in RStudio
-
-```{r, eval=F}
-
-install.packages(
-  c("sp","rgdal","tmap","classInt","RColorBrewer",
-    "ggplot2","leaflet", "ggmap"), dependencies=TRUE
-)
-
-```
-
-
+*Make sure you can cut and paste into RStudio*
 # Geographic Data
 
 
@@ -104,14 +87,16 @@ represent location more specifically with **coordinates**
 
 `46.130479, -117.134167`
   
-<img width="600px" src="images/anatone_google.png"></img>
+<img width="600px" src="./images/anatone_google.png"></img>
 
 
 ## Coordinate Reference Systems
 
 Coordinates only make sense when associated with a CRS!
 
-<img width="800px" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Latitude_and_Longitude_of_the_Earth.svg/640px-Latitude_and_Longitude_of_the_Earth.svg.png"></img>
+<img width="700px" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Latitude_and_Longitude_of_the_Earth.svg/640px-Latitude_and_Longitude_of_the_Earth.svg.png"></img>
+
+Geographic Coordinates: `Latitude` and `Longitude`
 
 ## Coordinate Reference Systems
 
@@ -119,73 +104,45 @@ Define:
 
 - the shape of the Earth
 
-- the origin
+- the origin (0,0 point)
 
 - the relationship between the system and the real world
 
 - the units
 
-Because of variations in 1-3, there are **many** geographic CRSs!
+*Because of variations in these, there are **many** geographic CRSs!*
 
 ## WGS84
 
-The [World Geodetic System of 1984](https://en.wikipedia.org/wiki/World_Geodetic_System) is the default geographic CRS used today.
+The [World Geodetic System of 1984](https://en.wikipedia.org/wiki/World_Geodetic_System) is the most widely used geographic coordinate reference system.
 
 `WGS84` is the default CRS for most GIS software
 
- - Almost all data with lon/lat coordinates are assumed to be WGS84 unless otherwise specified
+Almost all longitude and latitude data are assumed to be **WGS84** unless otherwise specified
 
-## NAD83
+*Historical data much trickier*
 
-[NAD83](https://en.wikipedia.org/wiki/North_American_Datum#North_American_Datum_of_1983) is another common geographic CRS used by US agencies like the Census.
+## Geospatial data are powerful!
 
-`WGS84` and `NAD83` are so similar that differences are often ignored except for applications requiring high locational accuracy.
+You can 
 
-## WGS84 vs NAD83
+- dynamically determine spatial metrics like area, length, distance and direction
 
-Why do you need to know?
+- spatial relationships like intersects, inside, contains, etc 
 
+and
 
-## Map Projections
-
-A `Projected CRS` applies a **map projection** to a Geographic CRS
-
-`Map Projection`: mathematial transformation from curved to flat surface
-
-<img width="600px" src="images/projection.gif"></img>
-
-
-## Many Map Projections & Projected CRSs
-
-All introduce distortion, 
-
-- in shape, area, distance, direction, or combo
-
-- the larger the area the greater the distortion
-
-No one map projection best for all purposes
-
-Selection depends on location, extent and purpose
-
-##  Different Projected CRSs
-
-<img height="500px" src="images/diff_crs.png"></img>
-
+- link data by location, like census data and crime data
 
 ## Spatial Data
 
-Spatial data is a more generic term that is not just for geographic data. 
+Spatial data is a broader term than geographic data. 
 
-## Spatial data are powerful because
+Methods for working with spatial data are valid for geospatial data 
 
-- dynamically determine spatial metrics like area and length, 
+All spatial data are encoded with some type of coordinate reference system
 
-- characteristics like distance and direction,
-
-- relationships like inside and intersects from these data, and
-
-- link data by spatial location!
-
+Geospatial data require the CRS to be a model of locations on the Earth
 
 # Types of Spatial Data
 
@@ -208,23 +165,15 @@ Regular grid of cells (or pixels)
 
 * We won't be covering Raster data in this workshop*
 
-## Softare for working with Geospatial Data
-
-- Why special software?
-
-## Software for working with Geospatial Data
-
-Most software can only store, edit, query and analyze numbers and text
-
-- Databases, spreadsheets, statistical software packages
+# Softare for working with Geospatial Data
 
 ## Geospatial data require
 
 software that can import, create, store, edit, visualize and analyze geospatial data
 
-- as geometric data types *referenced to the surface of the earth via CRSs*
+- represented as geometric data objects *referenced to the surface of the earth via CRSs*
     
-- and methods to operate on those representations
+- with methods to operate on those representations
 
 ## GIS
 
@@ -234,17 +183,20 @@ We call software for working with geospatial data **GIS**
 
 This term is commonly associated with desktop software applications.
 
-## Types of GIS
+## Types of GIS Software
 
-Desktop GIS - ArcGIS, QGIS
+Desktop GIS - `ArcGIS`, `QGIS`
 
-Software extended to support geospatial data - Tableau, R
+Spatial Databases - `PostgreSQL/PostGIS`
 
-Spatial Databases - Postgresql
+Web-based GIS - `ArcGIS Online`, `CARTO`
 
-Web GIS - ArcGIS Online, CARTO
+Software geospatial data support - `Tableau`
 
-Custom software - leaflet web maps
+Programming languages with geospatial data support 
+
+- `R`, `Python`, `Javascript`
+
 
 # Why R for Geospatial Data?
 
@@ -256,98 +208,26 @@ Reproducibility
 
 Free & Open Source
 
-Cutting edge 
+Strong support for geospatial data and analysis
 
-Thousands of Cool add-ons
-
-- Shiny, rleaflet
-
-
-# Geospatial Data File formats
-
-## Common File Formats
-
-Vector points, lines & polygons:
-
-* CSV
-* [ESRI Shapefile](https://en.wikipedia.org/wiki/Shapefile)
-* GeoJSON
-* KML
-
-Raster grids
-
-* TIFF, GeoTiff
-* JPEG, JPEG2000
-* ASCII Grid
-
-See [GIS file formats](https://en.wikipedia.org/wiki/GIS_file_formats)
-
-## ESRI Shapefile
-
-This is one of the most, if not the most common spatial vector data file formats.
-
-<img src="images/shapefile.png"></img>
-
-Old but everywhere!
-
-Gotchas: 2GB limit, 10 char column names, poor unicode support
-
-
-## CSV (Comma Separated Values) Files
-
-The simplest, most common format for point data
-
-<pre>
-"ID","name”,”x”,”y”,”taste","price","crowded","food"
-"1","babette",-122.255374,37.868428,10,4,1,1
-"2","musical",-122.260698,37.868383,7,3.25,1,1
-"3","starbucks",-122.266057,37.870441,6,2.95,1,0
-"4","yalis",-122.266385,37.873528,7,2.95,0,0
-"5","berkeleyesp",-122.268681,37.873664,3,3.25,1,0
-"6","fertile",-122.268863,37.874934,5,3.25,0,1
-</pre>
-
-# 3 Challenge Questions
-
-## Question #1
-
-- What columns contain the geographic data?
-- What is the CRS for these data?
-
-<pre>
-"ID","name”,”x”,”y”,”taste","price","crowded","food"
-"1","babette",-122.255374,37.868428,10,4,1,1
-"2","musical",-122.260698,37.868383,7,3.25,1,1
-"3","starbucks",-122.266057,37.870441,6,2.95,1,0
-"4","yalis",-122.266385,37.873528,7,2.95,0,0
-"5","berkeleyesp",-122.268681,37.873664,3,3.25,1,0
-"6","fertile",-122.268863,37.874934,5,3.25,0,1
-</pre>
-
-## Question #2
-
-- What's different?
-- Does it matter?
-
-<pre>
-"ID","name”,”x”,”y”,”taste","price","crowded","food"
-"1","babette",122.255374,37.868428,10,4,1,1
-"2","musical",122.260698,37.868383,7,3.25,1,1
-"3","starbucks",122.266057,37.870441,6,2.95,1,0
-"4","yalis",122.266385,37.873528,7,2.95,0,0
-"5","berkeleyesp",122.268681,37.873664,3,3.25,1,0
-"6","fertile",122.268863,37.874934,5,3.25,0,1
-</pre>
-
-## Question #3
-
-- What columns contain the geographic data?
-- What is the CRS for these data?
-
-<img src="images/bart_sf_df.png" width="600px"><img>
+Cutting edge
 
 
 # Geospatial Data in R
+
+## Prep reminder
+
+Make sure you have the packages we are going to use installed and loaded
+
+Make sure you have set your working directory to the location of the workshop files
+
+```{r, eval=F}
+install.packages(
+  c("sp","rgdal","tmap","classInt","RColorBrewer",
+    "ggplot2","leaflet", "ggmap"), dependencies=TRUE
+)
+```
+
 
 ## Geospatial Data in R
 
@@ -359,9 +239,11 @@ This approach is most common when
 
 - the data are point data in CSV files and
 
-- you want to map rather than spatially manipulate or analyze the data 
+- you want to map rather than spatially transform or analyze the data 
 
 ## About the Sample Data
+
+`sf_properties_25ksample.csv`
 
 **San Francisco Open Data Portal**
 [https://data.sfgov.org](https://data.sfgov.org)
@@ -370,42 +252,48 @@ This approach is most common when
 
 This data set includes the Office of the Assessor-Recorder’s secured property tax roll spanning from 2007 to 2016.
 
-We are using this as a proxy for home values.
+We are using a subset of these data as a proxy for home values.
 
 ## Load the CSV file into a data frame
 
-*Set your working directory first to the folder where you downloaded the workshop files!*
-```{r, eval=F }
-sfhomes <- read.csv('data/sf_properties_25ksample.csv') 
-head(sfhomes,6)
-```
+```{r, eval=F}
+sfhomes <- read.csv('data/sf_properties_25ksample.csv', 
+                    stringsAsFactors = FALSE)
 
-## Load the CSV file into a data frame
-
-*Set your working directory first to the folder where you downloaded the workshop files!*
-```{r }
-sfhomes <- read.csv('data/sf_properties_25ksample.csv')  
-str(sfhomes)
+# Take a look at first 5 rows and a few of the columns
+sfhomes[1:5,c("YearBuilt","totvalue","AreaSquareFeet","Neighborhood",
+              "NumBedrooms")]
 
 ```
+*Make sure your working directory is set to the folder where you downloaded the workshop files!*
 
+```{r, eval=T}
+sfhomes <- read.csv('data/sf_properties_25ksample.csv', 
+                    stringsAsFactors = FALSE)
+
+# Take a look at first 5 rows and a few of the columns
+sfhomes[1:5,c("YearBuilt","totvalue","AreaSquareFeet","Neighborhood",
+              "NumBedrooms")]
+
+```
 ## Explore the data
 
 ```{r, eval=F}
-class(sfhomes)   # what is the data object type?
-dim(sfhomes)     # how many rows and columns
-str(sfhomes)     # display the structure of the object
-head(sfhomes)    # take a look at the first 10 records
-summary(sfhomes) # explore the range of values
+class(sfhomes)            # what is the data object type?
+dim(sfhomes)              # how many rows and columns
+str(sfhomes)              # display the structure of the object
+head(sfhomes)             # take a look at the first 10 records
+summary(sfhomes)          # explore the range of values
 summary(sfhomes$totvalue) # explore the range of values for one column
 hist(sfhomes$totvalue)    # histogram for the totvalue column
 ```
 
-Questions:
+## Questions:
 
-- What columns make these data geospatial?
-- Are they vector or raster data?
-- What type of geometry? Points, lines, polygons, grid cells?
+- What columns contain the geographic data?
+- Are these data vector or raster data?
+- What type of geometry do the data contain? 
+    - Points, lines, polygons, grid cells?
 - What is the CRS of these data?
 
 
@@ -447,36 +335,62 @@ library(ggplot2)
 
 ## Maps with `ggplot2`
 
-*What's different from the `plot()` map?*
+Basic map with ggplot
 ```{r, eval=F}
 library(ggplot2)
 
-ggplot() + geom_point(data=sfhomes, aes(lon,lat)) + coord_map()
+ggplot() + geom_point(data=sfhomes, aes(lon,lat))
 
 ```
 
 
 ## Maps with `ggplot2`
 
-*What's different from the `plot()` map?*
+Basic map with ggplot
+```{r}
+ggplot() + geom_point(data=sfhomes, aes(lon,lat), size=1)
+```
+
+
+## Coord_map Option
+
 ```{r}
 ggplot() + geom_point(data=sfhomes, aes(lon,lat), size=1) + coord_map()
 ```
 
-## `coord_map` option
+## coord_map option
 
 Allows you to associate a map projection with geographic coord data.
 
 <img src="images/coord_map_help.png" width="600px"></img>
 
-## Non-coord map
-```{r}
-ggplot() + geom_point(data=sfhomes, aes(lon,lat), size=1) #+ coord_map()
-```
+## Map Projections
 
+`Map Projection`: mathematial transformation from curved to flat surface
+
+<img width="600px" src="images/projection.gif"></img>
+
+A `Projected CRS` applies a **map projection** to a Geographic CRS
+
+## Many Map Projections & Projected CRSs
+
+All introduce distortion, 
+
+- in shape, area, distance, direction, or combo
+
+- the larger the area the greater the distortion
+
+No one map projection best for all purposes
+
+Selection depends on location, extent and purpose
+
+##  Different Projected CRSs
+
+<img height="500px" src="images/diff_crs.png"></img>
 
 ## Map points symbolized by `totvalue`
 
+*Data driven symbology*
 ```{r, eval=F}
 ggplot() + geom_point(data=sfhomes, aes(lon,lat, col=totvalue)) + 
   coord_map()
@@ -554,21 +468,6 @@ ggplot() +
   facet_wrap(~ SalesYear)
 ```
 
-## Maps and Friends
-
-It's a good idea to explore data values before and during mapping.
-Sometimes maps aren't the best way or only way to visualize data.
-```{r, eval=F}
-
-ggplot(sfhomes2010_15, aes(totvalue)) + 
-  geom_histogram() + 
-  facet_wrap(~SalesYear)
-
-
-boxplot(sfhomes$totvalue~sfhomes$SalesYear)
-
-```
-
 
 # ggmap
 
@@ -589,25 +488,36 @@ library(ggmap)
 
 ## ggmap
 
-Some functionality may require you to register a Google API key
+Some `ggmap` functionality may require you to register a Google API key
+
+* Search - Google API Key
+* Create Google Maps API Key
+* Enable API key for geocoding, static maps API, javascript API
+
+
+## Register Google Maps Key
+
+with `ggmap`
+```{r, eval=F}
+#register_google(key="AIzXXXXXXXXXXXXXXXXXxPSE") # your key here
+register_google(key="AIzaSyBE23PnI3bzQBJkhXuhXTenSfwwOVH6xUo")
+```
+*This key will be disabled after the workshop!*
+
+## Re-install `ggmap`
+
+If you have problems with `ggmap` you may need to reinstall the library from github.
+
 See this [StackOverflow discussion](https://stackoverflow.com/questions/34402979/increase-the-api-limit-in-ggmaps-geocode-function-in-r)
 
-```{r}
+```{r, eval=F}
 #devtools::install_github("dkahle/ggmap")
 #library(ggmap)
-#register_google(key="XXXXX") # your key here
-```
-
-```{r, echo=FALSE}
-#devtools::install_github("dkahle/ggmap")
-#library(ggmap)
-#register_google(key="AIzXXXXXXXXXXXXXXXXXXXXXxPSE") # your key here
-
 ```
 
 ##  get_map
 
-Fetch map data (default=Google) to plot using `get_map`
+Fetch map data to plot using `get_map`
 
 Use `?get_map` for details
 ```{r, eval=F}
@@ -618,7 +528,7 @@ This use of the command leverages the Google Geocoding API to determine the coor
 
 ##  get_map
 
-Fetch map data (default=Google) to plot using `get_map`
+Fetch map data to plot using `get_map`
 
 Use `?get_map` for details
 ```{r}
@@ -691,15 +601,15 @@ sf_basemap <- get_map(sf_ctr, zoom=12, scale=1)
 
 ## Challenge
 
-Create a `ggmap` that uses customized `sf_basemap`
+Create a `ggmap` that uses the customized `sf_basemap`
 
+- Recreate our last map of property values (totvalue)
 
 ## Map the points with `sf_basemap`
 ```{r}
 ggmap(sf_basemap) +
   geom_point(data=sfhomes15, aes(x=lon, y=lat, col=totvalue))
 ```
-
 
 
 ## Map Overlays
@@ -714,26 +624,23 @@ Use the `read.csv` function to read in a file of Bart Station locations.
 
 ```{r}
 bart <- read.csv("./data/bart.csv")
-landmarks <- read.csv("./data/landmarks.csv")
-# head (bart)
-# head(landmarks)
+# take a look
+head (bart)
 ```
 
 ## Add BART stations to map
 ```{r, eval=F}
 ggmap(sf_basemap) +
   geom_point(data=sfhomes15, aes(x=lon, y=lat))  +
-  geom_point(data=bart, aes(x=X,y=Y), col="red") +
-  geom_point(data=landmarks, aes(x=X,y=Y), col="green")
+  geom_point(data=bart, aes(x=X,y=Y), col="red") 
 ```
 
-## All good?
+## Add BART stations to map
 
 ```{r, echo=F}
 ggmap(sf_basemap) +
   geom_point(data=sfhomes15, aes(x=lon, y=lat))  +
-  geom_point(data=bart, aes(x=X,y=Y), col="red") +
-  geom_point(data=landmarks, aes(x=X,y=Y), col="green")
+  geom_point(data=bart, aes(x=X,y=Y), col="red")
 ```
 
 Questons?
@@ -746,22 +653,36 @@ Determining the geographic coordinates for one or more addresses, zip codes, or 
 
 ## Geocode SF Police Stations
 
-```{r}
-police_stations <- read.csv("data/sf_police_addresses.csv", stringsAsFactors = F)
+```{r, eval=T}
+police_stations <- read.csv("data/sf_police_addresses.csv", 
+                            stringsAsFactors = F)
 head(police_stations)
-geocode(police_stations)
-?geocode
 ```
 
+## Geocode the Police Stations
+
+```{r, eval=F}
+#?geocode
+geocode(police_stations)
+```
 
 ## Single column address
-```{r}
+```{r, eval=T}
 police_stations$full_address <- paste(police_stations$Address, 
                                       police_stations$City, police_stations$State)
 head(police_stations)
+```
+
+## Geocode
+```{r}
 station_coords <- geocode(police_stations$full_address)
+```
+
+## Add the lat/lons to the data
+
+```{r}
 police_stations <- cbind(police_stations, station_coords)
-head(police_stations)
+police_stations[1:5,c("PoliceDistrict","full_address","lon","lat")]
 ```
 
 ## Add the police stations 
@@ -770,6 +691,23 @@ to your last map
 
 Use a different color
 
+## Add Police Stations
+```{r, eval=F}
+ggmap(sf_basemap) +
+  geom_point(data=sfhomes15, aes(x=lon, y=lat))  +
+  geom_point(data=bart, aes(x=X,y=Y), col="red", size=3) +
+  geom_point(data=police_stations, aes(x=lon,y=lat), shape=22, 
+             col="black", fill="grey", size=4)
+```
+
+## Add Police Stations
+```{r, echo=F}
+ggmap(sf_basemap) +
+  geom_point(data=sfhomes15, aes(x=lon, y=lat))  +
+  geom_point(data=bart, aes(x=X,y=Y), col="red", size=3) +
+  geom_point(data=police_stations, aes(x=lon,y=lat), shape=22, 
+             col="black", fill="grey", size=4)
+```
 ## About Google geocoding
 
 - You can geocode addresses or place names
@@ -782,23 +720,46 @@ Use a different color
 
 - Use ESRI Geocoding tools if you have more addresses
 
+## Let's add one more layer
+
+*SF Landmarks*
+
+`data/landmarks.csv`
+
+## SF Landmarks
+
+```{r}
+landmarks <- read.csv("./data/landmarks.csv")
+head(landmarks)
+```
+
+## Map Landmarks
+```{r, eval=F}
+ggmap(sf_basemap) +
+  geom_point(data=sfhomes15, aes(x=lon, y=lat))  +
+  geom_point(data=bart, aes(x=X,y=Y), col="red", size=3) +
+  geom_point(data=landmarks, aes(x=X,y=Y), shape=22, 
+             col="black", fill="grey", size=4)
+```
+
+## Map Landmarks
+
+*All good?*  If not, why not?
+```{r, echo=F}
+ggmap(sf_basemap) +
+  geom_point(data=sfhomes15, aes(x=lon, y=lat))  +
+  geom_point(data=bart, aes(x=X,y=Y), col="red", size=3) +
+  geom_point(data=landmarks, aes(x=X,y=Y), shape=22, 
+             col="black", fill="grey", size=4)
+```
+
 # GGMap and GGPlot are great!
+
 
 ## BUT!
 
 There are limits to what you can do with geospatial data stored in a data frame.
 
-
-
-
-## Can't read & plot geospatial data files
-
-The ESRI Shapefile is the most common file format for geospatial data.
-
-Can't read in or **directly** plot data in a shapefile with `ggplot` or `ggmap`.
-
-
-<img src="images/shapefile.png" width="400px"></img>
 
 ## Can't transform Coordinate Data
 
@@ -806,7 +767,17 @@ These data are not in geographic coordinates - longitude and latitude.
 
 You can't map these with `ggmap`.
 
-<img src="images/bart_sf_df.png" width="600px"><img>
+```{r, echo=F}
+head(landmarks)
+```
+
+## Can't read & plot geospatial data files
+
+The ESRI Shapefile is the most common file format for geospatial data.
+
+Can't read in or **directly** plot data in a shapefile with `ggplot` or `ggmap`.
+
+<img src="images/shapefile.png" width="400px"></img>
 
 
 ## Can't Perform Spatial Analysis
@@ -820,7 +791,6 @@ Spatial data objects and methods are needed to answer questions like
 - What is the area of each SF Neighborhood and the property density?
 
 - What properties are within walking distance (.25 miles) of the Mission neighborhood?
-
 
 
 # Spatial Data Objects in R
@@ -1006,7 +976,7 @@ proj4string(sfhomes15_sp) # get a CRS object
 
 ```
 
-## Map an `SpatialPointsDataFrame`
+## Map a `SpatialPointsDataFrame`
 ```{r}
 plot(sfhomes15_sp)  # using sp::plot
 ```
@@ -1023,9 +993,6 @@ We aren't seeing the value of `sp` objects just yet.
 
 # Let's add more geospatial data
 
-## Reading in Geospatial Data
-
-There's an R package for that! 
 
 ## `rgdal`
 
@@ -1902,6 +1869,7 @@ dir("saved_data")
 ```{r, eval=F, echo=F}
 ## Output code to script
 library(knitr)
-purl("r-geospatial-workshop-feb2018-pt1.Rmd", output = "scripts/r-geospatial-workshop-feb2018-pt1.r", documentation = 1)
-#purl("r-geospatial-workshop-feb2018-pt1.Rmd", output = "scripts/r-geospatial-workshop-feb2018-pt1.r", documentation = 0)
+purl("r-geospatial-workshop-pt1.Rmd",
+     output = "scripts/r-geospatial-workshop-pt1.R", documentation = 1)
+
 ```
