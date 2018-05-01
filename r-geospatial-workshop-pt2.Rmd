@@ -25,11 +25,11 @@ Taste of Spatial Analysis
 - Click *Clone or Download* and download the zip file
 - Upzip the zip file and make a note of the folder in which it is located
 
-2. Open RStudio and start a new script
+2. Open RStudio and start a new script or continue the one from last week
 
 3. Set your working directory to where you downloaded and unzipped the files
 
-4. Follow along by opening `r-geospatial-workshop-feb2018-pt2.html` in a web browser
+4. Follow along by opening `r-geospatial-workshop-pt2.html` in a web browser
 
 5. Make sure required libraries are installed. 
 
@@ -93,10 +93,16 @@ setwd("~/Documents/Dlab/workshops/2018/rgeo/r-geospatial-workshop/r-geospatial-w
 
 ## SF Properties 2015
 
-Read in from CSV file
+Load the data from file
 ```{r}
-sfhomes <- read.csv('data/sf_properties_25ksample.csv', stringsAsFactors = FALSE)
+# Read in from CSV file
+sfhomes <- read.csv('data/sf_properties_25ksample.csv', 
+                    stringsAsFactors = FALSE)
+
+# subset the data
 sfhomes15 <- subset(sfhomes, as.numeric(SalesYear) == 2015)
+
+# what type of data object?
 class(sfhomes15)
 ```
 
@@ -1141,18 +1147,33 @@ Raster data is a another major topic!
 
 ## Selected  References & Tutorials
 
+Introductory Tutorials
+
 - [Spatial Data in R tutorial](https://cengel.github.io/rspatial)
-- [An Introduction to Spatial Data Analysis and Visualisation in R](https://data.cdrc.ac.uk/tutorial/an-introduction-to-spatial-data-analysis-and-visualisation-in-r)
 - [NEON Spatial Data tutorials](http://neondataskills.org/tutorial-series/)
 - [GIS in R](http://www.nickeubank.com/gis-in-r)
-- [Spatial Data Analysis and Modeling in R](http://www.rspatial.org/index.html)
-- [Intro to visualizing Spatial Dat in R](https://github.com/Robinlovelace/Creating-maps-in-R)
+
+Geodata Visualization emphasis
+
+- [Tmap in a Nutshell](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-nutshell.html)
+- [Intro to visualizing Spatial Data in R](https://github.com/Robinlovelace/Creating-maps-in-R)
 - [RStudio Leaflet in R tutorial](https://rstudio.github.io/leaflet)
 - [Blog on mapping census data in R](http://zevross.com/blog/2015/10/14/manipulating-and-mapping-us-census-data-in-r-using-the-acs-tigris-and-leaflet-packages-3/)
-- [Geocomputation in R online book featuring sf Package](http://robinlovelace.net/geocompr/ )
-- [CRAN Task View: Analysis of Spatial Data](https://cran.r-project.org/web/views/Spatial.html)
-- http://rstudio-pubs-static.s3.amazonaws.com/6577_3b66f8d8f4984fb2807e91224defa854.html
 
+## Selected  References & Tutorials
+
+Deep dive Tutorials that include spatial analysis
+
+- [An Introduction to Spatial Data Analysis and Visualisation in R](https://data.cdrc.ac.uk/tutorial/an-introduction-to-spatial-data-analysis-and-visualisation-in-r)
+- [Intro to GIS and Spatial Analysis (see appendices)](https://mgimond.github.io/Spatial/index.html)
+- [Spatial Data Analysis and Modeling in R](http://www.rspatial.org/index.html)
+- [Geocomputation in R (featuring sf Package)](http://robinlovelace.net/geocompr/ )
+- [Weight Spatial Polygon Overlay tutorial, aka areal interpolation](http://rstudio-pubs-static.s3.amazonaws.com/6577_3b66f8d8f4984fb2807e91224defa854.html)
+
+
+CRAN Spatial Packages
+
+- [CRAN Task View: Analysis of Spatial Data](https://cran.r-project.org/web/views/Spatial.html)
 
 ## Output code to script
 
