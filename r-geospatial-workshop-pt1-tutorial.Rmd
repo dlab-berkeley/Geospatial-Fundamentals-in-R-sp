@@ -74,6 +74,7 @@ Raw Code
 `scripts/r-geospatial-workshop-pt1.R`
 
 *Make sure you can cut and paste into RStudio*
+
 # Geographic Data
 
 
@@ -269,6 +270,8 @@ sfhomes[1:5,c("YearBuilt","totvalue","AreaSquareFeet","Neighborhood",
 
 ```
 *Make sure your working directory is set to the folder where you downloaded the workshop files!*
+
+##
 
 ```{r, eval=T}
 sfhomes <- read.csv('data/sf_properties_25ksample.csv', 
@@ -501,10 +504,11 @@ Some `ggmap` functionality may require you to register a Google API key
 ## Register Google Maps Key
 
 with `ggmap`
-```{r, eval=F}
+```{r}
 #register_google(key="AIzXXXXXXXXXXXXXXXXXxPSE") # your key here
 register_google(key="AIzaSyBE23PnI3bzQBJkhXuhXTenSfwwOVH6xUo")
 ```
+*This key will be disabled after the workshop!*
 
 ## Re-install `ggmap`
 
@@ -995,7 +999,6 @@ We aren't seeing the value of `sp` objects just yet.
 
 # Let's add more geospatial data
 
-
 ## `rgdal`
 
 `rgdal` is an R port of the powerful and widely used [GDAL](http://gdal.org) library.
@@ -1073,43 +1076,18 @@ plot(sfboundary)
 
 
 
+## Map `sfboundary` & `sfhomes15_sp`
 
-```{r, eval=F, echo=F}
-## Demonstration - A more complex `SpatialPolygonsDataFrame`
-library(tigris)
-calcounties <- counties(state="California", cb=T)
-class(calcounties)
-sf_cen <- subset(calcounties, COUNTYFP == "075")
-plot(sf_cen)
-head(sf_cen@data)
-# Now look in Envi Window
-
-```
-
-
-## What is the the sfboundary CRS
-
-Is it a geographic or projected CRS?
-
-```{r, eval=F}
-
-proj4string(sfboundary)
-
-```
-
-## Map both `sfboundary` & `sfhomes15_sp`
 ```{r}
-
 plot(sfboundary)
 points(sfhomes15_sp, col="red")
-
 ```
 
-## Map both `sfboundary` & `sfhomes15_sp`
+## Map `sfboundary` & `sfhomes15_sp`
 
 Where are the points? What's wrong?
 
-```{r, eval=F}
+```{r, eval=T}
 plot(sfboundary)
 points(sfhomes15_sp, col="red")
 ```
@@ -1122,7 +1100,6 @@ Compare the CRSs, are they the same?
 
 proj4string(sfboundary)
 proj4string(sfhomes15_sp)
-proj4string(sfboundary) == proj4string(sfhomes15_sp)
 
 ```
 
@@ -1132,7 +1109,6 @@ proj4string(sfboundary) == proj4string(sfhomes15_sp)
 
 proj4string(sfboundary)
 proj4string(sfhomes15_sp)
-proj4string(sfboundary) == proj4string(sfhomes15_sp)
 
 ```
 
@@ -1163,12 +1139,15 @@ If not, one needs to be assigned to the object
 
 All `sp` objects should have the same CRS.
 
+This `CRS` should be defined in the `proj4string` slot.
+
 - When they don't, they need to be transformed to a common CRS.
 
 - This is called a **projection transformation**, 
     - or `projecting` or `reprojection`.
 
-- Projection transformation returns a new spatial object with the transformed coordinates
+
+Projection transformation returns a new spatial object with the transformed coordinates
 
 
 
@@ -1194,9 +1173,8 @@ If yes, which one? How can you tell?
 
 We need to know 
 
-- what the appropriate CRS is
-- how to define it as a CRS object
-- how to assign it to an `sp` object
+- what the data's CRS is
+- how to define it for the `sp` object
 
 ## What is the CRS
 
@@ -1206,27 +1184,25 @@ bbox(sfhomes15_sp)
 
 ## Defining a CRS
 
-Use the `sp` function `CRS()` to define a coordinate reference system
+Use the `sp` function `CRS()` to create a CRS object
 
-- requires as input a string that defines the CRS parameters
-
-Then, use the `sp` function `proj4string()` to assign it
+Then, use the `sp::proj4string()` to assign it
 
 ```{r}
+
+# Define the CRS for sfhomes15_sp as WGS84
 
 proj4string(sfhomes15_sp) <- CRS("+proj=longlat 
                                +ellps=WGS84 +datum=WGS84 +no_defs")  
 ```
 
-## WGS84 CRS
+## Referencing the WGS84 CRS
 
-The WGS84 geographic coordinate referenece system can be defined by:
-
-1. It's paramater string
+The WGS84 `proj4` string
 
 ```CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")```
 
-2. A code that can be used to look up the parameters
+The WGS84 `epsg` code
 
 ```CRS("+init=epsg:4326")``` 
 
@@ -1284,10 +1260,9 @@ proj4string(sfhomes15_sp) <- CRS("+init=epsg:4326")
 `epsg` codes are used as short-hand for CRSs definitions
 
 
-
 ## Compare the CRSs, again
 
-Are they both defined? Equal?
+Are they both defined? Are they the same?
 
 ```{r}
 
@@ -1318,7 +1293,6 @@ Outputs a new spatial object with coordinate data in the target CRS
 
 Let's transform the CRS of `sfboundary` to be the same as that of `sfhomes15_sp`.
 
-Why not the other way around?
 
 ```{r}
 
@@ -1326,6 +1300,7 @@ sfboundary_lonlat <- spTransform(sfboundary, CRS("+init=epsg:4326"))
 
 ```
 
+Why not the other way around?
 
 ## Did it work?
 
@@ -1361,7 +1336,16 @@ points(sfhomes15_sp, col="red")
 
 ## So....
 
-We can transform `sp` objects to the same CRS for mapping and spatial analysis (we'll get there!)
+We can **define** the CRS of `sp` objects and **transform** them to the same CRS for mapping and spatial analysis.
+
+Recap
+```{r, eval=F}
+# Define the CRS
+proj4string(sfhomes15_sp) <- CRS("+init=epsg:4326")
+
+#Transform the CRS
+sfboundary_lonlat <- spTransform(sfboundary, CRS("+init=epsg:4326"))
+```
 
 
 ## Save `sfboundary_lonlat`
@@ -1380,7 +1364,7 @@ writeOGR(sfboundary_lonlat,
 dir("data")
 ```
 
-
+=
 
 ## Projections, CRS, oh my!
 
@@ -1487,370 +1471,6 @@ points(landmarks_lonlat, col="green")
 ```
 # QUESTIONS?
 
-# Break.....
-
-
-# Mapping Spatial Objects
-
-## So far we have created maps with
-
-`base::plot`, `ggplot`, `ggmap` for geospatial data in data frames
-
-- great for creating maps given these types of data
-
-
-`sp::plot` for `sp` objects
-
-- meh, but great for a quick look at spatial data
-
-## There is also sp::spplot
-
-Use it to create quick maps
-
-Can be used to create great maps 
-
-- BUT complex, non-intuitive syntax = long ugly code
-
-See examples in [sp Gallery: Plotting maps with sp](https://edzer.github.io/sp)
-
-## spplot
-
-```{r}
-# map of the sfhomes data by totalvaue
-spplot(sfhomes15_sp,"totvalue")
-```
-
-# tmap
-
-## tmap
-
-`tmap` stands for thematic map
-
-Great maps with less code than the alternatives
-
-Syntax should be familar to ggplot2 users, but simpler
-
-Relatively easy to create interactive maps
-
-## tmap starting points
-
-- ?tmap
-- vignette("tmap-nutshell")
-- vignette("tmap-modes")
-- [tmap in a Nutshell](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-nutshell.html) 
-
-
-## tmap
-
-Load the library
-
-```{r}
-library(tmap)
-
-```
-
-## Quick tmap (qtm)
-
-```{r}
-qtm(sfhomes15_sp)
-```
-
-## Quick Interactive tmap
-
-```{r}
-tmap_mode("view")
-qtm(sfhomes15_sp)
-```
-
-## Reset the mode to static plot
-
-```{r}
-tmap_mode("plot")
-```
-
-## Handy Shortcuts
-```{r, eval=F}
-
-ttm()       # Toggle Tmap mode between "interactive" and "plot"
-
-last_map()  # display the last map 
-
-```
-
-
-## Plot mode
-
-```{r}
-tmap_mode("plot")
-```
-
-
-# Crafting Layered tmaps
-
-## `tmap` Shapes and Graphic Elements
-
-tmap's flexibility comes in how it intitively allows you to layer spatial data and style the layers by data attributes
-
-Use `tm_shape(<sp_object>)`  to specifiy a geospatial data layer
-
-Add `+ tm_<element>(...)` to style the layer by data values
-
-...and other options for creating a publication ready map
-
-## Exploring `tmap` functionality
-
-?tmap_shape
-
-?tmap_element
-
-- ?tm_polygons (tm_fill, tm_borders)
-- ?tm_symbols (tm_dots, etc...)
-
-- [tmap in a Nutshell](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-nutshell.html) 
-
-
-## Mapping polygons
-
-```{r}
-tm_shape(sfboundary_lonlat) + 
-  tm_polygons(col="beige", border.col="black")
-```
-
-## Mapping Points
-
-```{r}
-tm_shape(sfhomes15_sp) + 
-  tm_dots(col="red", size=.25)
-```
-
-## Mapping Lines
-```{r}
-tm_shape(highways_lonlat) + 
-  tm_lines(col="black")
-```
-## Mapping values
-
-```{r, eval=F}
-tm_shape(sfhomes15_sp) + 
-  tm_dots(col="totvalue", size=.25)    # column names must be quoted
-```
-
-`tm_dots` are a type of `tm_symbols()`
-
-See `?tm_symbols` for other types of point symbols.
-
-## Mapping values
-
-```{r}
-tm_shape(sfhomes15_sp) + 
-  tm_dots(col="totvalue", size=.25)  # columnn names **must** be quoted!
-```
-
-
-## Combining the layers
-```{r, eval=F}
-tm_shape(sfboundary_lonlat) + 
-  tm_polygons(col="beige", border.col="black") +
-tm_shape(highways_lonlat) + 
-  tm_lines(col="black") +
-tm_shape(sfhomes15_sp) + 
-  tm_dots(col="totvalue", size=.25) 
- 
-```
-## Combining the layers
-```{r, echo=F}
-tm_shape(sfboundary_lonlat) + 
-  tm_polygons(col="beige", border.col="black") +
-tm_shape(highways_lonlat) + 
-  tm_lines(col="black") +
-tm_shape(sfhomes15_sp) + 
-  tm_dots(col="totvalue", size=.25) 
- 
-```
-
-## Making it more Polished
-
-```{r, eval=F}
-tm_shape(sfboundary_lonlat) + 
-  tm_polygons(col="beige", border.col="black") +
-tm_shape(highways_lonlat) + 
-  tm_lines(col="black") +
-tm_shape(sfhomes15_sp) + 
-  tm_dots(col="totvalue", size=.25, title = "San Francisco Property Values (2015)") + 
-tm_layout(inner.margins=c(.05, .2, .15, .05)) # bottom, left, top, right
-```
-
-## Making it more Polished
-
-```{r, echo=F}
-tm_shape(sfboundary_lonlat) + 
-  tm_polygons(col="beige", border.col="black") +
-tm_shape(highways_lonlat) + 
-  tm_lines(col="black") +
-tm_shape(sfhomes15_sp) + 
-  tm_dots(col="totvalue", size=.25, title = "San Francisco Property Values (2015)") + 
-tm_layout(inner.margins=c(.05, .2, .15, .05)) # bottom, left, top, right
-```
-
-## Challenge
-
-Add the `landmarks` to the previous `tmap`
-
-Feel free to change the colors and title etc.
-
-## Challenge - Solution
-
-What does the **landmarks** layer tell you about the way `tmap` handles CRSs?
-```{r, eval=F}
-tm_shape(sfboundary_lonlat) + 
-  tm_polygons(col="beige", border.col="black") +
-tm_shape(highways_lonlat) + 
-  tm_lines(col="black") +
-tm_shape(sfhomes15_sp) + 
-  tm_dots(col="totvalue", size=.25, 
-          title = "San Francisco Property Values (2015)") + 
-tm_shape(landmarks) +
-  tm_markers(col="black", size=.4, text="name",text.just = "left") +
-tm_layout(inner.margins=c(.05, .2, .15, .05)) # bottom, left, top, right
-```
-## Challenge - Solution
-
-```{r, echo=F}
-tm_shape(sfboundary_lonlat) + 
-  tm_polygons(col="beige", border.col="black") +
-tm_shape(highways_lonlat) + 
-  tm_lines(col="black") +
-tm_shape(sfhomes15_sp) + 
-  tm_dots(col="totvalue", size=.25, title = "San Francisco Property Values (2015)") + 
-tm_shape(landmarks) +
-  tm_markers(col="black", size=.4, text="name",text.just = "left") +
-tm_layout(inner.margins=c(.05, .2, .15, .05)) # bottom, left, top, right
-```
-
-## Challenge
-
-Make the previous `tmap` interactive
-
-## Challenge - Solution
-```{r, eval=F}
-ttm()       # Toggle Tmap mode between "interactive" and "plot"
-last_map()  # display the last map 
-```
-
-## Challenge - Solution
-```{r, echo=F}
-ttm()       # Toggle Tmap mode between "interactive" and "plot"
-last_map()  # display the last map 
-```
-
-## Improve the Popup
-
-**popup.vars = 
-      c("SalesYear","totvalue","NumBedrooms",
-         "NumBathrooms","AreaSquareFeet")**
-
-```{r, eval=F}
-tm_shape(sfboundary_lonlat) + 
-  tm_polygons(col="beige", border.col="black") +
-tm_shape(highways_lonlat) + 
-  tm_lines(col="black") +
-tm_shape(sfhomes15_sp) + 
-  tm_dots(col="totvalue", size=.25, 
-          title = "San Francisco Property Values (2015)",
-          popup.vars=c("SalesYear","totvalue","NumBedrooms",
-                       "NumBathrooms","AreaSquareFeet")) + 
-tm_shape(landmarks) +
-  tm_markers(col="black", size=.4, text="name",text.just = "left") +
-tm_layout(inner.margins=c(.05, .2, .15, .05)) # bottom, left, top, right
-```
-
-## Improve the Popup
-
-```{r, echo=F}
-tm_shape(sfboundary_lonlat) + 
-  tm_polygons(col="beige", border.col="black") +
-tm_shape(highways_lonlat) + 
-  tm_lines(col="black") +
-tm_shape(sfhomes15_sp) + 
-  tm_dots(col="totvalue", size=.25, 
-          title = "San Francisco Property Values (2015)",
-          popup.vars=c("SalesYear","totvalue","NumBedrooms",
-                       "NumBathrooms","AreaSquareFeet")) + 
-tm_shape(landmarks) +
-  tm_markers(col="black", size=.4, text="name",text.just = "left") +
-tm_layout(inner.margins=c(.05, .2, .15, .05)) # bottom, left, top, right
-```
-
-
-
-
-## Save the map
-
-Save it as an R object
-```{r }
-map1 <- last_map()
-map1 # then display it
-```
-
-## Save `tmap` to file
-
-Try this and then take a look at your files
-
-```{r, eval=F}
-save_tmap(map1, "sf_properties.png", height=6) # Static image file
-save_tmap(map1, "sf_properties.html") # interactive web map
-```
-
-```{r, echo=F}
-save_tmap(map1, "sf_properties.png", height=6) # Static image file
-save_tmap(map1, "sf_properties.html") # interactive web map
-```
-
-## Publish your Map
-
-Many ways to do this.
-
-You can share you map online by publishing it to [RPubs](https://rpubs.com).
-
-- You need to have an `RPubs` account to make that work.
-
-1. Enter the name of your tmap object (`map1`) or your  `tmap` code in the console
-
-2. In the `Viewer` window, click on the **Publish** icon.
-
-
-## RPub Demo
-
-```{r, eval=F}
-tmap_mode("interactive")
-map1 #  in console
-```
-
-[http://rpubs.com/pfrontiera/358110](http://rpubs.com/pfrontiera/358110)
-
-# Questions?
-
-## Save data for next workshop
-
-```{r, eval=F}
-
-# write transformed data objects to a new shapefile 
-coordinates(bart) <- c("X","Y")
-proj4string(bart) <- CRS(proj4string(sfboundary_lonlat))
-
-save_layers <- c("sfhomes15_sp", "sfboundary_lonlat", "highways_lonlat", "bart", "landmarks")
-for (i in save_layers){
-  print(paste("Saving [",i,"] to file..."))
-  writeOGR(get(i), 
-          dsn = "saved_data", 
-          layer = i, 
-          driver="ESRI Shapefile")
-}
-# is it there?
-dir("saved_data")
-
-```
-
 
 ## Recap
 
@@ -1861,7 +1481,6 @@ dir("saved_data")
 - Convert Data Frame to `SPDF`
 - CRS definitions and transformations
 - Map Overlays
-- Geospatial Maps with `tmap`
 
 # End of Part I
 

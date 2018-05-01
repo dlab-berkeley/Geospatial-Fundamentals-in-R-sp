@@ -29,6 +29,21 @@ knitr::opts_chunk$set(echo = TRUE)
 
 - sp, rgdal, rgeos, tmap, ggplot2, RColorbrewer, classInt
 
+## Follow Along
+
+Open one of the tutorial files in a web browser
+
+Slides
+`r-geospatial-workshop-pt2.html `
+
+Tutorial
+`r-geospatial-workshop-pt2-tutorial.html `
+
+Raw Code
+`scripts/r-geospatial-workshop-pt2-May-2018.R`
+
+*Make sure you can cut and paste into RStudio*
+
 ## Part II Overview
 
 Recap Part I
