@@ -1,6 +1,6 @@
 ---
 title: "Geospatial Data in R, pt1"
-author: "Patty Frontiera"
+author: "Drew Hart & Patty Frontiera"
 date: "Fall 2018"
 output:  ioslides_presentation
 ---
@@ -33,23 +33,18 @@ install.packages(
 
 Intro to working with geospatial data in R
 
-- geospatial data files and formats
+- Geospatial data files and formats
 - Loading geospatial data in R
 - R packages for working with geospatial data
-- coordinate reference systems
- 
-<br/>
-Mapping geospatial data
+- Coordinate reference systems & map projections
+- Mapping geospatial data
 
-<br/>
-Practice
+</br>
 
+*Key goal is `familiarity`, competency takes lots of practice*
 
 ## About Me
 
-Patty Frontiera
-
-[dlab.berkeley.edu](http://dlab.berkeley.edu)
 
 ## About you
 
@@ -538,26 +533,23 @@ Let's fetch a simple map on which we can display our points
 
 Here we are centering the map on San Francisco & using the stamen `toner-lite` basemap.
 
-```{r}
+```{r, warning=FALSE}
 sf_center_point <- c(lon=-122.445144, lat=37.769335 )
 sf_map <- get_map(sf_center_point, source="stamen", maptype="toner-lite")  
 ```
 
-## Display the ggmap of SF
-
-```{r, eval=F}
-ggmap(sf_map)
-```
-
-## Display the ggmap of SF
+## Use `ggmap` to display the map
 
 ```{r}
 ggmap(sf_map)
 ```
 
+
 ## `ggmap` with point overlay
 
 Syntax similar to `ggplot`
+
+But `ggmap` takes the name of the map object returned by `get_map()`
 
 ```{r, eval=F}
 # ggplot() +
@@ -574,48 +566,62 @@ ggmap(sf_map) +
   geom_point(data=sfhomes, aes(x=lon, y=lat, col=totvalue))
 ```
 
-## Customize `get_map`
+## Setting the map Extent
 
-Create a basemap zoomed to the extent of our data
-```{r, eval=F}
+That map is fine but the zoom level isn't right.
 
-# FIRST - subset the data
-sfhomes15 <- subset(sfhomes, as.numeric(SalesYear) == 2015)
+We want to zoom in on the data by setting the map extent.
+
+## Customize `get_map` Extent
+
+We can set the map extent by centering the map on our data and increasing the zoom level.
+
+- Note: `get_map` prints a lot of messages to the screen!
+
+```{r, results='hide'}
 
 # Get the center point of the data
 sf_ctr <- c(lon = mean(sfhomes$lon), lat = mean(sfhomes$lat))
 sf_ctr  # take a look
-
-# create the map
-sf_basemap <- get_map(sf_ctr, source="stamen", maptype="toner-lite" zoom=12)
+ 
+# create the map - setting the zoom level to 12
+sf_basemap <- get_map(sf_ctr, source="stamen", maptype="toner-lite", zoom=12)
 ```
 
 
 ## Customize `get_map` Extent
 
-Get a basemap zoomed to the extent of the 2015 data
+Now, view the data on top of the `sf_basemap` with `ggmap`
+
 ```{r}
-# FIRST - subset the data
-sfhomes15 <- subset(sfhomes, as.numeric(SalesYear) == 2015)
-
-# Get the center point of the data
-sf_ctr <- c(lon = mean(sfhomes15$lon), lat = mean(sfhomes15$lat))
-sf_ctr  # take a look
-
-# create the map
-sf_basemap <- get_map(sf_ctr, source="stamen", maptype="toner-lite", zoom=12)
+ggmap(sf_basemap) +
+   geom_point(data=sfhomes, aes(x=lon, y=lat, col=totvalue))
 ```
 
 ## Challenge
 
 Create a `ggmap` that uses the customized `sf_basemap`
 
-- Recreate our last map of property values (totvalue)
+- overlay the `sfhomes` data for `2015
 
-## Map the points with `sf_basemap`
-```{r}
-ggmap(sf_basemap) +
+- color code the points by `totvalue`
+
+## Challenge
+
+```{r, results = "hide"}
+# FIRST - subset the data
+sfhomes15 <- subset(sfhomes, as.numeric(SalesYear) == 2015)
+#
+sfhomes15_map <- ggmap(sf_basemap) +
   geom_point(data=sfhomes15, aes(x=lon, y=lat, col=totvalue))
+```
+
+## Challenge
+
+Display the results
+
+```{r}
+sfhomes15_map
 ```
 
 
@@ -627,30 +633,30 @@ You can use this method to add as many layers as you want to a `ggmap` or `ggplo
 
 ## Bart Stations and Landmarks
 
-Use the `read.csv` function to read in a file of Bart Station locations.
+Use the `read.csv` function to read in a file of Bart Station locations. What is the name of the column with the longitude values? latitude?
 
 ```{r}
 bart <- read.csv("./data/bart.csv")
+
 # take a look
 head (bart)
 ```
 
 ## Add BART stations to map
-```{r, eval=F}
-ggmap(sf_basemap) +
+```{r, results="hide"}
+sfmap_with_bart <- ggmap(sf_basemap) +
   geom_point(data=sfhomes15, aes(x=lon, y=lat))  +
-  geom_point(data=bart, aes(x=X,y=Y), col="red") 
+  geom_point(data=bart, aes(x=X,y=Y), col="red", size=3) 
 ```
 
 ## Add BART stations to map
-
-```{r, echo=F}
-ggmap(sf_basemap) +
-  geom_point(data=sfhomes15, aes(x=lon, y=lat))  +
-  geom_point(data=bart, aes(x=X,y=Y), col="red")
+ 
+```{r }
+sfmap_with_bart
 ```
 
-# Questons?
+# Questions?
+
 ## Let's add one more layer
 
 *SF Landmarks*
@@ -665,8 +671,11 @@ head(landmarks)
 ```
 
 ## Map Landmarks
-```{r, eval=F}
-ggmap(sf_basemap) +
+
+Create a map of the SF homes, BART Stations and Landmarks on top of the basemap.
+
+```{r, results = "hide"}
+sfmap_bart_landmarks <- ggmap(sf_basemap) +
   geom_point(data=sfhomes15, aes(x=lon, y=lat))  +
   geom_point(data=bart, aes(x=X,y=Y), col="red", size=3) +
   geom_point(data=landmarks, aes(x=X,y=Y), shape=22, 
@@ -675,13 +684,10 @@ ggmap(sf_basemap) +
 
 ## Map Landmarks
 
-*All good?*  If not, why not?
+*All good - are all layers displayed?*  If not, why not?
+ 
 ```{r, echo=F}
-ggmap(sf_basemap) +
-  geom_point(data=sfhomes15, aes(x=lon, y=lat))  +
-  geom_point(data=bart, aes(x=X,y=Y), col="red", size=3) +
-  geom_point(data=landmarks, aes(x=X,y=Y), shape=22, 
-             col="black", fill="grey", size=4)
+sfmap_bart_landmarks
 ```
 
 # GGMap and GGPlot are great!
@@ -694,7 +700,7 @@ There are limits to what you can do with geospatial data stored in a data frame.
 
 ## Can't transform Coordinate Data
 
-These data are not in geographic coordinates - longitude and latitude.
+The Landmark data do not have geographic coordinates - longitude and latitude.
 
 You can't map these with `ggmap`.
 
@@ -706,23 +712,25 @@ head(landmarks)
 
 The ESRI Shapefile is the most common file format for geospatial data.
 
-Can't read in or **directly** plot data in a shapefile with `ggplot` or `ggmap`.
-
 <img src="images/shapefile.png" width="400px"></img>
 
+`ggplot` and `ggmap` cannot **directly** read in or plot shapefile data.
+
+- *though you can do it with a round-about set of commands* :(
 
 ## Can't Perform Spatial Analysis
 
-Spatial data objects and methods are needed to answer questions like
+ `ggplot` & `ggmap` can't answer questions like
 
-- What properties are in the Noe Valley neighborhood?
+- *What properties are in the Noe Valley neighborhood?*
 
-- What is the average property value in each SF neighborhood?
+- *What is the average property value in each SF neighborhood?*
 
-- What is the area of each SF Neighborhood and the property density?
+- *What is the area of each SF Neighborhood and the property density?*
 
-- What properties are within walking distance (.25 miles) of the Mission neighborhood?
+- *What properties are within walking distance (.25 miles) of the Mission neighborhood?*
 
+ You need `spatial data objects` and `spatial methods` for that!
 
 # Spatial Data Objects in R
 
@@ -737,17 +745,16 @@ The `SP` package is most commonly used to construct and manipulate spatial data 
 
 **Hundreds** of other R packages that do things with spatial data typically build on SP objects.
 
+```{r, eval=F}
+library(sp)
+```
 
-# sp package
 
 ## `sp` package
-
-Load the library `sp`
 
 Take a look at the different types of spatial object classes supported by `sp`
 
 ```{r, eval=F}
-library(sp)
 getClass("Spatial") 
 ```
 
@@ -771,6 +778,8 @@ getClass("Spatial")
 </pre>
 
 We use the S*DF objects most frequently!
+
+- SpatialPointsDataFrame, SpatialLinesDataFrame, SpatialPolygonsDataFrame
 
 
 # From Data Frame to SpatialPointsDataFrame
@@ -798,7 +807,8 @@ sfhomes15_sp <- sfhomes15  # Make a copy - why?
 
 class(sfhomes15_sp)  # check the class of the object
 
-coordinates(sfhomes15_sp) <- c('lon','lat')  #  Make it spatial - ORDER MATTERS!!
+coordinates(sfhomes15_sp) <- c('lon','lat')  #  Make it spatial
+                                             #  ORDER MATTERS!!
 
 class(sfhomes15_sp)  # check the class of the object
 ```
@@ -1415,7 +1425,7 @@ points(landmarks_lonlat, col="green")
 ```{r, eval=F, echo=F}
 ## Output code to script
 library(knitr)
-purl("r-geospatial-workshop-pt1.Rmd",
-     output = "scripts/r-geospatial-workshop-pt1.R", documentation = 1)
+purl("r-geospatial-workshop-pt1-fall2018.Rmd",
+     output = "scripts/r-geospatial-workshop-pt1-fall2018.R", documentation = 1)
 
 ```
