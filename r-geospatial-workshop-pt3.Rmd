@@ -114,12 +114,23 @@ bart <- read.csv("./data/bart.csv", stringsAsFactors = F)
 
 ```
 
+## SF Census Tracts
+```{r}
+# Read in the 'sftracts_wpop' shapefile
+tracts = readOGR('./data', 'sftracts_wpop')
+```
+
 ## SF Boundary
 
 Read in the `sf_boundary.shp` file with `rGDAL`
 
 ```{r}
 sfboundary <- readOGR(dsn="data", layer="sf_boundary")
+
+#transform it to match the tracts projection
+sfboundary_lonlat = spTransform(sfboundary, CRS(proj4string(tracts)))
+
+proj4string(sfboundary_lonlat) == proj4string(tracts)
 
 ```
 
@@ -129,14 +140,6 @@ sfboundary <- readOGR(dsn="data", layer="sf_boundary")
 # Read in the `sf_highways.shp` file with `rGDAL`
 highways <- readOGR(dsn="data", layer="sf_highways")
 
-# Transform to geographic coords
-highways_lonlat <- spTransform(highways, CRS("+init=epsg:4326"))
-```
-
-## SF Census Tracts
-```{r}
-# Read in the 'sftracts_wpop' shapefile
-tracts = readOGR('./data', 'sftracts_wpop')
 ```
 
 # PART I: Raster Data in R
@@ -179,8 +182,9 @@ Transform (or reproject) the Tracts vector data to match it.
 #check out its projection
 proj4string(DEM)
 
-#reproject tracts to our DEM projection
+#reproject tracts and sfboundary to our DEM projection
 tracts_NAD = spTransform(tracts, CRS(proj4string(DEM)))
+sfboundary_NAD = spTransform(sfboundary_lonlat, CRS(proj4string(DEM)))
 ```
 
 ## CRS Transformations
@@ -238,7 +242,7 @@ We can make an interactivelyplot using `TMAP`
 my_map <- tm_shape(DEM_WGS_crop) +
   tm_raster() +
 tm_shape(tracts) + 
-  tm_borders()
+  tm_borders() +
 
 # Set mode to interactive
 tmap_mode("view")
