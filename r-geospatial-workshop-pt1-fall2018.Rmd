@@ -3,6 +3,8 @@ title: "Geospatial Data in R, pt1"
 author: "Drew Hart & Patty Frontiera"
 date: "Fall 2018"
 output:  ioslides_presentation
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -535,6 +537,7 @@ Here we are centering the map on San Francisco & using the stamen `toner-lite` b
 
 ```{r, warning=FALSE}
 sf_center_point <- c(lon=-122.445144, lat=37.769335 )
+
 sf_map <- get_map(sf_center_point, source="stamen", maptype="toner-lite")  
 ```
 
@@ -817,7 +820,7 @@ class(sfhomes15_sp)  # check the class of the object
 
 ```{r}
 
-sfhomes15_sp <- sfhomes15  # Make a copy - why?
+sfhomes_sp <- sfhomes  # Make a copy - why?
 
 class(sfhomes15_sp)  # check the class of the object
 

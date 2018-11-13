@@ -1,0 +1,524 @@
+---
+title: "Geospatial Data & Maps in R, pt 3"
+author: "Drew Hart"
+date: "October 2018"
+output: 
+  ioslides_presentation:
+    widescreen: true
+    smaller: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Part III Prep
+
+1. https://github.com/dlab-geo/r-geospatial-workshop
+
+- Click *Clone or Download* and download the zip file
+- Upzip the zip file and make a note of the folder in which it is located
+
+2. Open RStudio and start a **new script** or continue the one from last week
+
+3. Set your working directory to where you downloaded and unzipped the files
+
+4. Follow along by opening `r-geospatial-workshop-pt3.html` in a web browser
+
+5. Make sure required libraries are installed. 
+
+- sp, rgdal, rgeos, tmap, ggplot2, RColorbrewer, classInt, raster
+
+## Follow Along
+
+Open one of the tutorial files in a web browser
+
+Slides
+`r-geospatial-workshop-pt3.html `
+
+Tutorial
+`r-geospatial-workshop-pt3-tutorial.html `
+
+R Code
+`scripts/r-geospatial-workshop-pt3.Rmd`
+
+*Make sure you can cut and paste into RStudio*
+
+## Part III Overview
+
+Review basic raster concepts
+
+Read in our previous spatial data and new raster data
+
+Make some raster and combined raster-vector maps
+
+Run some raster and raster-vector operations and analyses
+
+## R Spatial Libraries
+
+Let's load the libraries we will use
+
+```{r, eval=FALSE}
+library(sp)     # spatial objects and methods
+library(rgdal)  # read/write from file; manage CRSs
+library(rgeos)  # geometric operations
+library(tmap)   # mapping spatial objects
+library(raster) # reading in and operating on rasters
+```
+
+##
+
+```{r, echo=FALSE}
+library(sp)     # spatial objects and methods
+library(rgdal)  # read and write from file
+library(rgeos)  # geometric operations
+library(tmap)   # mapping spatial objects
+library(raster) # reading in and operating on rasters
+```
+ 
+## Set your working directory
+
+Use `setwd` to set your working directory to the location of the tutorial files.
+
+For example:
+
+```{r, eval=FALSE}
+path = "/home/ihavehands/Desktop/stuff/berk/dlab/r-geospatial-workshop/"
+setwd(path)
+```
+
+# Load files from Parts I and II
+
+## SF Properties 2015
+
+```{r}
+# Read in from CSV file
+print(list.files())
+sfhomes <- read.csv('./data/sf_properties.csv', 
+                    stringsAsFactors = FALSE)
+# subset the data
+sfhomes15 <- subset(sfhomes, as.numeric(SalesYear) == 2015)
+
+sfhomes15_sp <- sfhomes15  # Make a copy
+
+# Make it spatial
+coordinates(sfhomes15_sp) <- c('lon','lat')
+
+```
+
+## BART Stations
+
+```{r}
+# Read in the Bart data from CSV file
+bart <- read.csv("./data/bart.csv", stringsAsFactors = F)
+
+```
+
+## SF Boundary
+
+Read in the `sf_boundary.shp` file with `rGDAL`
+
+```{r}
+sfboundary <- readOGR(dsn="data", layer="sf_boundary")
+
+```
+
+## SF Highways
+
+```{r}
+# Read in the `sf_highways.shp` file with `rGDAL`
+highways <- readOGR(dsn="data", layer="sf_highways")
+
+# Transform to geographic coords
+highways_lonlat <- spTransform(highways, CRS("+init=epsg:4326"))
+```
+
+## SF Census Tracts
+```{r}
+# Read in the 'sftracts_wpop' shapefile
+tracts = readOGR('./data', 'sftracts_wpop')
+```
+
+# PART I: Raster Data in R
+
+## Read in a Raster
+
+Using the fabulous `raster` package
+
+```{r}
+# Reading in and plotting raster files
+
+#read in a Bay Area DEM (Digital Elevation Model)
+#(from http://www.webgis.com/terr_pages/CA/dem1/sanfrancisco.html)
+DEM = raster('./data/san_francisco-e.DEM')
+```
+
+## Plot it
+
+Make a quick map of the data to check it out
+```{r}
+#plot it
+plot(DEM)
+```
+
+## Explore the Structure
+
+Just enter the name of the raster to see a summary of its structure.
+You can view more detail in the RStudio Environment pane.
+```{r}
+DEM
+```
+
+## CRS Transformations
+
+Check the CRS (aka projection) of the DEM raster data.
+
+Transform (or reproject) the Tracts vector data to match it.
+
+```{r}
+#check out its projection
+proj4string(DEM)
+
+#reproject tracts to our DEM projection
+tracts_NAD = spTransform(tracts, CRS(proj4string(DEM)))
+```
+
+## CRS Transformations
+
+You can reproject the DEM with `raster::projectRaster`
+
+Note how the syntax is similar to `sp::spTransform`
+
+```{r}
+DEM_WGS = projectRaster(DEM, projectExtent(DEM, CRS(proj4string(tracts))))
+
+# Now let's check equivalence
+proj4string(tracts_NAD) == proj4string(DEM)
+proj4string(DEM_WGS) == proj4string(tracts)
+```
+
+## Clipping Rasters
+
+Since the raster data covers a larger area than our vector data / area of interest, we can clip it.
+
+```{r}
+# clip the WGS CRS version of the rasters to tracts 
+DEM_WGS_crop = crop(DEM_WGS, extent(tracts))
+
+# Clip the NAD CRS version
+DEM_crop = crop(DEM, extent(tracts_NAD))
+```
+
+## Plot Clipped Raster data
+
+You can plot raster and vector data together
+```{r}
+# plot together
+plot(DEM_WGS_crop)
+plot(tracts, add = T)
+ 
+```
+
+## Plot Raster & Vector Data
+
+Here we plot the NAD CRS version
+```{r}
+#plot together
+ 
+plot(DEM_crop)
+plot(tracts_NAD, add = T)
+```
+
+
+## Let's plot these in TMAP
+
+We can make an interactivelyplot using `TMAP`
+
+```{r}
+my_map <- tm_shape(DEM_WGS_crop) +
+  tm_raster() +
+tm_shape(tracts) + 
+  tm_borders()
+
+# Set mode to interactive
+tmap_mode("view")
+```
+
+## View Map
+```{r}
+my_map
+```
+
+## Extract elevation values
+
+We can use the raster::extract function to get the elevation values for each tract.
+
+```{r}
+# get the elevation for every cell in each of the census tracts
+elev = extract(DEM_WGS_crop, tracts)
+
+#what did that give us?
+head(elev)
+
+```
+
+
+## What is the output?
+
+Check out the data in the `elev` object
+```{r}
+length(elev)
+nrow(tracts)
+```
+
+## What is the output?
+
+A vector of the elevations for all the cells within each census tract!
+
+```{r}
+length(elev)
+nrow(tracts)
+```
+
+## Average Raster value by Vector shape
+
+Let's get each tract's average elevation
+```{r}
+mean_elev = lapply(elev, mean, na.rm = T)
+head(mean_elev)
+
+```
+
+## Add elevation to Vector object
+
+Let's add this to the tracts_NAD df
+NOTE: the order remains the same, so we can just add this right in!
+```{r}
+tracts$mean_elev = unlist(mean_elev)
+```
+
+
+## Map it
+```{r}
+#what did we get?
+elev_map <- tm_shape(tracts) + 
+  tm_polygons(col = 'mean_elev') +
+  tm_layout("The pain of biking in SF, by census tract", 
+            inner.margins=c(0,0,.1,0), title.size=4.8)
+```
+
+## Map it
+
+```{r}
+elev_map
+```
+
+## One step Re-do
+
+We can also pass a function argument to `raster::extract`
+```{r}
+elev = extract(DEM_WGS_crop, tracts, fun=mean)
+
+#what did that give us?
+head(elev)
+```
+
+## Questions?
+
+Can you see the difference between mapping a vector layer on top of a raster layer (my_map) compared to summarizing raster values by vector polygons and then mapping the polygon features (elev_map)?
+
+# RasterStacks and RasterBricks
+
+## RasterStacks
+
+What about working with multiple rasters?
+
+## Fog data
+
+Data on summertime coastal fog in CA (a.k.a. Karl)
+```{r}
+#(from http://climate.calcommons.org/dataset/monthly-summertime-fog)
+#(units are in average hours per day)
+karl_files = unique(gsub('.aux.xml', '', list.files('./data/CalMnYr')))
+karl_files = karl_files[grep('flcc', karl_files)]
+
+# Take  a look
+karl_files
+```
+
+## RasterStack
+
+Read all of the KARL files into one RasterStack object
+```{r}
+karl <- stack(paste0('./data/CalMnYr/', karl_files))
+
+# look at what we made
+karl
+
+```
+*A RasterStack object -  literally what it sounds like!*
+
+## Plot the Stack
+
+```{r}
+#plot one
+plot(karl[[7]])
+plot(tracts, add = T)
+```
+
+## CRS
+
+What's the projection of the RasterStack?
+
+## CRS
+
+What's the projection of the RasterStack?
+```{r}
+
+#what's the projection?
+proj4string(karl)
+```
+
+## CRS Transformation
+
+Let's reproject this
+```{r}
+karl_WGS = projectRaster(karl, projectExtent(karl, CRS(proj4string(tracts))))
+
+# check resultant CRS
+proj4string(karl_WGS) == proj4string(tracts)
+
+```
+
+
+##  What??
+
+What type of spatial object did that give us?
+
+```{r}
+karl_WGS
+```
+
+## RasterBrick
+
+A RasterBrick. What does that mean?
+```{r}
+
+# See the documentation!
+?raster::brick
+
+```
+
+
+## Crop the Brick
+
+Crop it to the extent of our area of interest - SF
+```{r}
+# Crop it to tracts
+karl_WGS_crop = crop(karl_WGS, extent(tracts))
+
+#Note that R vectorized that operation across our entire RasterBrick, the same way that it vectorizes many operations, e.g. 3<4 vs 3< seq(4)
+```
+
+
+## Plot it
+
+```{r}
+# now let's make our same plot again
+par(mfrow = c(1,2))
+plot(karl[[7]])
+plot(tracts, add = T)
+plot(karl_WGS_crop[[7]])
+plot(tracts, add = T)
+
+
+```
+
+## Mean Fog
+
+Let's mean the karl values across the RasterBrick
+```{r}
+# Mean values
+mean_karl_WGS_crop = mean(karl_WGS_crop)
+```
+
+What did that give us?
+```{r}
+mean_karl_WGS_crop
+```
+
+## RasterBrick to Raster
+
+When we computed the mean of a RasterBrick we got back a RasterLayer object! That makes sense, because we took cellwise means across all Layers in our Brick.
+
+**This is called raster algebra**
+
+## Plot it
+
+```{r}
+plot(mean_karl_WGS_crop)
+plot(tracts, add = T)
+```
+
+
+## BUT
+
+Not all common operations successfully run as raster algebra
+```{r, eval=FALSE}
+# This won't work
+sd_karl_WGS_crop = sd(karl_WGS_crop)
+```
+
+Let's try this instead
+```{r}
+sd_karl_WGS_crop = calc(karl_WGS_crop, sd)
+```
+
+## Plot it
+
+```{r}
+#plot that too
+par(mfrow = c(1,2))
+plot(mean_karl_WGS_crop)
+plot(tracts, add = T)
+plot(sd_karl_WGS_crop)
+plot(tracts, add = T)
+```
+
+## Thoughts...
+
+Looks like the foggiest neighborhoods also have the highest variation in fog, 
+but some less foggy neighborhoods on the east side of the city
+(e.g. The Inner Mission, Bayview) also vary quite a bit
+
+## Extract Mean Values
+
+Extract fog values to our tracts
+```{r}
+tracts$mean_karl = extract(mean_karl_WGS_crop, tracts, mean)
+```
+
+
+## Explore Spatial Relationships
+
+Maybe fogginess is a function of elevation? would make sense, right?
+
+```{r}
+# Linear regression model
+mod = lm(mean_karl ~ mean_elev, data = tracts)
+```
+
+## View results
+```{r}
+summary(mod)
+```
+
+## Comments
+
+Neat! Census_tract mean elevation has a significant, positive effect on
+mean fogginess (with each meter increase in elevation causing on average
+a .011 hour, or about 39-second increase in time spent in fog on an average
+summer day. Though this only explains about 35% of the variance in our data.
+
+## Questions?
+
