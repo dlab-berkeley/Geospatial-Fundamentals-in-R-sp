@@ -83,11 +83,17 @@ Use `setwd` to set your working directory to the location of the tutorial files.
 For example:
 
 ```{r, eval=FALSE}
-path = "/home/ihavehands/Desktop/stuff/berk/dlab/r-geospatial-workshop/"
+path = "/path/to/your/working_directory"
 setwd(path)
 ```
 
 # Load files from Parts I and II
+
+## SF Census Tracts
+```{r}
+# Read in the 'sftracts_wpop' shapefile
+tracts = readOGR('./data', 'sftracts_wpop')
+```
 
 ## SF Properties 2015
 
@@ -104,20 +110,17 @@ sfhomes15_sp <- sfhomes15  # Make a copy
 # Make it spatial
 coordinates(sfhomes15_sp) <- c('lon','lat')
 
-```
+#Assign it a proj4string using the EPSG code
+proj4string(sfhomes15_sp) <- CRS("+init=epsg:4326")
 
-## BART Stations
+#Reproject to the tracts projection
+#NOTE: We're overwriting the previous sfhomes15_sp object here! This is
+#fine to do if we want, but we should always beware.
+sfhomes15_sp = spTransform(sfhomes15_sp, CRS(proj4string(tracts)))
 
-```{r}
-# Read in the Bart data from CSV file
-bart <- read.csv("./data/bart.csv", stringsAsFactors = F)
+#check projection equality
+proj4string(sfhomes15_sp) == proj4string(tracts)
 
-```
-
-## SF Census Tracts
-```{r}
-# Read in the 'sftracts_wpop' shapefile
-tracts = readOGR('./data', 'sftracts_wpop')
 ```
 
 ## SF Boundary
@@ -134,15 +137,9 @@ proj4string(sfboundary_lonlat) == proj4string(tracts)
 
 ```
 
-## SF Highways
 
-```{r}
-# Read in the `sf_highways.shp` file with `rGDAL`
-highways <- readOGR(dsn="data", layer="sf_highways")
 
-```
-
-# PART I: Raster Data in R
+# SECTION I: Raster Data in R
 
 ## Read in a Raster
 
@@ -215,22 +212,20 @@ DEM_crop = crop(DEM, extent(tracts_NAD))
 
 ## Plot Clipped Raster data
 
-You can plot raster and vector data together
+You can plot raster and vector
 ```{r}
-# plot together
 plot(DEM_WGS_crop)
-plot(tracts, add = T)
  
 ```
 
 ## Plot Raster & Vector Data
 
+And we can plot raster and vector data together!
 Here we plot the NAD CRS version
 ```{r}
 #plot together
- 
-plot(DEM_crop)
-plot(tracts_NAD, add = T)
+plot(DEM_WGS_crop)
+plot(tracts, add = T)
 ```
 
 
@@ -331,7 +326,257 @@ head(elev)
 
 Can you see the difference between mapping a vector layer on top of a raster layer (my_map) compared to summarizing raster values by vector polygons and then mapping the polygon features (elev_map)?
 
-# RasterStacks and RasterBricks
+# Challenge section
+
+## Challenge 1: Read in and check out new data
+
+You have another raster dataset in your `./data` directory. The file is called
+`nlcd2011_sf.tif`. This is data from the National Land Cover Database (NLCD; https://www.mrlc.gov/nlcd11_leg.php). It's 2011 data that was downloaded from https://viewer.nationalmap.gov/basic.
+Read that file in as an object called `nlcd`, and plot it.
+
+### Work in progress...
+
+### Solution
+
+```{r}
+#read in nlcd data
+nlcd = raster('./data/nlcd2011_sf.tif')
+
+#plot nlcd
+plot(nlcd)
+```
+
+## Let's also take a look at a summary of the NLCD data
+
+```{r}
+summary(nlcd)
+```
+
+## ... and a barplot
+
+```{r}
+barplot(nlcd)
+```
+
+## What do those values mean?
+
+This is a categorical raster. Each cell on the raster holds a discrete (integer) value, coding a particular type of land-cover (rather than a continuous value, like we saw with our elevation data above).
+
+Where do we do to figure out what the codes mean? This should come with the metadata that ships with your data. [Here] (https://www.mrlc.gov/nlcd11_leg.php) is a layout of the NLCD codes.
+
+
+## Challenge 2: Reproject and crop our NLCD data
+
+Now that we've read in our NCLD data, check if we need to reproject it (we want it to be in the same projection as our `tracts` object), and project it if need be. Then crop it to the extent of our `tracts` object.
+
+### Work in progress...
+
+### Solution
+
+```{r}
+#check projection equality
+proj4string(nlcd) == proj4string(tracts)
+
+#reproject
+nlcd_WGS = projectRaster(nlcd, projectExtent(nlcd, CRS(proj4string(tracts))))
+
+#check projection equality again
+proj4string(nlcd_WGS) == proj4string(tracts)
+
+#crop
+nlcd_WGS_crop = crop(nlcd_WGS, extent(tracts))
+
+```
+
+## Reclassifying categorical rasters
+
+When we're working with a categorical raster, we'll often want to reclass our data. We may want to do this because:
+
+- Our original data has more classifications than we actually need for our analysis.
+- We want to represent the classifications we do have by a different numerical scheme because it somehow makes our analysis more convenient.
+
+## Reclass the NLCD
+
+Let's reclass our NLCD data. First we'll need to define a reclassification
+matrix with 3 columns (low, high, to):
+
+```{r, eval = FALSE}
+?reclassify
+```
+
+## Define reclassification matrix 
+```{r}
+reclass_df <- c(0, 12, NA, # water will be set to NA (i.e. 'left out' of our analysis)
+                20, 30, 0, # developed and hardscape will have 0s
+                30, 32, 0, 
+                40, Inf, 1) # greensapce will have 1s
+reclass_df
+reclass_m <- matrix(reclass_df, ncol = 3, byrow = TRUE)
+reclass_m
+```
+
+## Reclassify the raster 
+```{r}
+nlcd_green <- reclassify(nlcd, reclass_m)
+
+freq(nlcd_green)
+
+barplot(nlcd_green)
+```
+
+## Challenge 3: Extract our NLCD data to our tract polygons
+
+Just like we did earlier with our elevation data, let's extract our reclassed
+NLCD data to our census-tract polygons.
+
+### Work in progress...
+
+### Solution
+
+```{r}
+
+#extract the mean nlcd_simple values to tract polygons
+greenspace = extract(nlcd_green, tracts, fun=mean)
+
+```
+
+## What did we get?
+
+```{r}
+greenspace
+```
+## Why?
+
+What's with all the NAs?
+
+Remember, we set all water cells to NA, to ignore them in our analysis.
+
+## Challenge 4: How do we get extract to ignore our NAs?
+
+Try to run the same command again, but telling the extract function to ignore NAs.
+
+### Work in progress...
+
+### Solution
+
+The `na.rm` argument will do this for us. See how the docs indicate that it is set to FALSE by default? 
+
+```{r, eval = FALSE}
+?raster::extract
+```
+
+Good to know!  Also good to know that this is a common
+argument across a variety of R operations.
+
+### Solution
+
+```{r}
+#extract the mean nlcd_simple values to tract polygons,
+#this time setting na.rm to TRUE
+greenspace = extract(nlcd_green, tracts, fun=mean, na.rm = T)
+
+#and add to our tracts dataframe (which we can do because order is preserved)
+tracts$prop_greenspace = greenspace
+
+```
+## Get the mean home values in each tract
+
+Pulling code from the end of Part II of this workshop, let's aggregate our homes data to the tract level too.
+
+```{r}
+#aggregate totvalue to tracts
+tracts_w_mean_val = aggregate(x = sfhomes15_sp['totvalue'], by = tracts, FUN = mean)
+
+#use a quick tmap to check that it looks like sensible output
+qtm(tracts_w_mean_val, fill = 'totvalue')
+
+#and add the mean_val column to our tracts dataframe
+tracts$mean_totvalue = tracts_w_mean_val$totvalue
+
+```
+
+## Predicting home values
+
+Do mean elevation and proportion greenspace predict mean total home values in each tract?
+
+```{r}
+mod = lm(mean_totvalue ~ mean_elev + prop_greenspace, data = tracts)
+summary(mod)
+```
+
+## Predicting home values
+
+Not at the census-tract level. But that's kind of coarse...
+
+What if we want to do the analysis at the property level?
+
+Here's a workflow that puts together a bunch of what we've learned over
+Parts I to III of the workshop!
+
+```{r}
+#First, we'll take a random subset of our 2015 homes, so that our analysis doesn't take so long to compute.
+sfhomes15_sample = sfhomes15_sp[sample(seq(nrow(sfhomes15_sp)), replace = FALSE, size = 2000), ]
+```
+
+## Predicting home values
+
+```{r}
+#Now let's reproject all our data to a UTM projection, so that we units of meters rather 
+#than decimal degrees
+sfhomes15_utm <- spTransform(sfhomes15_sample, CRS("+init=epsg:26910"))
+DEM_utm = projectRaster(DEM, projectExtent(DEM, CRS(proj4string(sfhomes15_utm))))
+nlcd_green_utm = projectRaster(nlcd_green, projectExtent(nlcd_green, CRS(proj4string(sfhomes15_utm))))
+#and check that the projections are all good
+proj4string(sfhomes15_utm) == proj4string(DEM_utm)
+proj4string(sfhomes15_utm) == proj4string(nlcd_green_utm)
+
+```
+
+## Predicting home values
+
+```{r}
+#Now let's buffer all our homes with a 100-meter buffer
+sfhomes15_utm_buff = gBuffer(sfhomes15_utm, width = 100, byid = T)
+#and sum the greenspace raster within each buffer
+#NOTE: This will take a couple minutes to run...
+greenspace_homes = extract(nlcd_green_utm, sfhomes15_utm_buff, fun = sum, na.rm = T)
+#and add that as a column in our sfhomes15_utm dataframe
+sfhomes15_utm$greenspace = greenspace_homes
+```
+
+## Predicting home values
+
+```{r}
+#And now let's extract the elevation at each home
+#NOTE: no need for fun or na.rm arguments here, because the homes
+#and points, not polygons, so only a single cell will extract to each)
+elev_homes = extract(DEM_utm, sfhomes15_utm)
+#and add that as a column in our sfhomes15_utm dataframe too
+sfhomes15_utm$elev = elev_homes
+
+```
+
+## Predicting home values
+
+**Now**, how about that regression model?
+
+```{r}
+mod = lm(totvalue ~ elev + greenspace, data = sfhomes15_utm)
+summary(mod)
+
+```
+
+Mehhh... Some signal for elevation, but very low R^2.
+
+Neat analysis though!
+
+
+## Questions?
+
+
+
+
+# SECTION II: RasterStacks and RasterBricks
 
 ## RasterStacks
 
