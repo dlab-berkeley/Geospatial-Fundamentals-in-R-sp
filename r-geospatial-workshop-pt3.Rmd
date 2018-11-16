@@ -326,7 +326,12 @@ head(elev)
 
 Can you see the difference between mapping a vector layer on top of a raster layer (my_map) compared to summarizing raster values by vector polygons and then mapping the polygon features (elev_map)?
 
+# SECTION II: Categorical Rasters, Reclassifying, and Spatial Analysis
+
 # Challenge section
+
+This section will feature a number of challenges, to get you practicing some of the
+material we've already covered today.
 
 ## Challenge 1: Read in and check out new data
 
@@ -334,9 +339,9 @@ You have another raster dataset in your `./data` directory. The file is called
 `nlcd2011_sf.tif`. This is data from the National Land Cover Database (NLCD; https://www.mrlc.gov/nlcd11_leg.php). It's 2011 data that was downloaded from https://viewer.nationalmap.gov/basic.
 Read that file in as an object called `nlcd`, and plot it.
 
-### Work in progress...
+## Work in progress...
 
-### Solution
+## Solution
 
 ```{r}
 #read in nlcd data
@@ -369,9 +374,9 @@ Where do we do to figure out what the codes mean? This should come with the meta
 
 Now that we've read in our NCLD data, check if we need to reproject it (we want it to be in the same projection as our `tracts` object), and project it if need be. Then crop it to the extent of our `tracts` object.
 
-### Work in progress...
+## Work in progress...
 
-### Solution
+## Solution
 
 ```{r}
 #check projection equality
@@ -420,7 +425,10 @@ reclass_m
 nlcd_green <- reclassify(nlcd, reclass_m)
 
 freq(nlcd_green)
+```
 
+## Reclassify the raster 
+```{r}
 barplot(nlcd_green)
 ```
 
@@ -429,14 +437,14 @@ barplot(nlcd_green)
 Just like we did earlier with our elevation data, let's extract our reclassed
 NLCD data to our census-tract polygons.
 
-### Work in progress...
+## Work in progress...
 
-### Solution
+## Solution
 
 ```{r}
 
 #extract the mean nlcd_simple values to tract polygons
-greenspace = extract(nlcd_green, tracts, fun=mean)
+greenspace = c(extract(nlcd_green, tracts, fun=mean))
 
 ```
 
@@ -455,9 +463,9 @@ Remember, we set all water cells to NA, to ignore them in our analysis.
 
 Try to run the same command again, but telling the extract function to ignore NAs.
 
-### Work in progress...
+## Work in progress...
 
-### Solution
+## Solution
 
 The `na.rm` argument will do this for us. See how the docs indicate that it is set to FALSE by default? 
 
@@ -468,7 +476,7 @@ The `na.rm` argument will do this for us. See how the docs indicate that it is s
 Good to know!  Also good to know that this is a common
 argument across a variety of R operations.
 
-### Solution
+## Solution
 
 ```{r}
 #extract the mean nlcd_simple values to tract polygons,
@@ -486,7 +494,11 @@ Pulling code from the end of Part II of this workshop, let's aggregate our homes
 ```{r}
 #aggregate totvalue to tracts
 tracts_w_mean_val = aggregate(x = sfhomes15_sp['totvalue'], by = tracts, FUN = mean)
+```
 
+## Get the mean home values in each tract
+
+```{r}
 #use a quick tmap to check that it looks like sensible output
 qtm(tracts_w_mean_val, fill = 'totvalue')
 
@@ -520,13 +532,16 @@ sfhomes15_sample = sfhomes15_sp[sample(seq(nrow(sfhomes15_sp)), replace = FALSE,
 
 ## Predicting home values
 
+Now let's reproject all our data to a UTM projection, so that we units of meters rather 
+than decimal degrees.
+
 ```{r}
-#Now let's reproject all our data to a UTM projection, so that we units of meters rather 
-#than decimal degrees
+#reproject
 sfhomes15_utm <- spTransform(sfhomes15_sample, CRS("+init=epsg:26910"))
 DEM_utm = projectRaster(DEM, projectExtent(DEM, CRS(proj4string(sfhomes15_utm))))
 nlcd_green_utm = projectRaster(nlcd_green, projectExtent(nlcd_green, CRS(proj4string(sfhomes15_utm))))
-#and check that the projections are all good
+
+#check that the projections are all good
 proj4string(sfhomes15_utm) == proj4string(DEM_utm)
 proj4string(sfhomes15_utm) == proj4string(nlcd_green_utm)
 
@@ -534,24 +549,32 @@ proj4string(sfhomes15_utm) == proj4string(nlcd_green_utm)
 
 ## Predicting home values
 
+Now let's buffer all our homes with a 100-meter buffer, then sum the greenspace within
+those buffers.
+
 ```{r}
-#Now let's buffer all our homes with a 100-meter buffer
+#create buffer
 sfhomes15_utm_buff = gBuffer(sfhomes15_utm, width = 100, byid = T)
-#and sum the greenspace raster within each buffer
+
+#sum the greenspace within the buffers 
 #NOTE: This will take a couple minutes to run...
 greenspace_homes = extract(nlcd_green_utm, sfhomes15_utm_buff, fun = sum, na.rm = T)
-#and add that as a column in our sfhomes15_utm dataframe
+
+#add that as a column in our sfhomes15_utm dataframe
 sfhomes15_utm$greenspace = greenspace_homes
 ```
 
 ## Predicting home values
 
+And now let's extract the elevation at each home.
+
 ```{r}
-#And now let's extract the elevation at each home
+#extract the elevation to the homes
 #NOTE: no need for fun or na.rm arguments here, because the homes
-#and points, not polygons, so only a single cell will extract to each)
+#and points, not polygons, so only a single cell will extract to each
 elev_homes = extract(DEM_utm, sfhomes15_utm)
-#and add that as a column in our sfhomes15_utm dataframe too
+
+#add that as a column in our sfhomes15_utm dataframe too
 sfhomes15_utm$elev = elev_homes
 
 ```
@@ -576,7 +599,7 @@ Neat analysis though!
 
 
 
-# SECTION II: RasterStacks and RasterBricks
+# SECTION III: RasterStacks and RasterBricks
 
 ## RasterStacks
 
@@ -651,7 +674,7 @@ karl_WGS
 ## RasterBrick
 
 A RasterBrick. What does that mean?
-```{r}
+```{r, eval = FALSE}
 
 # See the documentation!
 ?raster::brick
@@ -764,7 +787,7 @@ summary(mod)
 
 ## Comments
 
-Neat! Census_tract mean elevation has a significant, positive effect on
+Neat! Census-tract mean elevation has a significant, positive effect on
 mean fogginess (with each meter increase in elevation causing on average
 a .011 hour, or about 39-second increase in time spent in fog on an average
 summer day. Though this only explains about 35% of the variance in our data.
