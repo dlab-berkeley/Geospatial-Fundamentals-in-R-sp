@@ -1,11 +1,13 @@
 ---
 title: "Geospatial Data & Maps in R, pt 3"
 author: "Drew Hart"
-date: "October 2018"
+date: "November 2018"
 output: 
   ioslides_presentation:
     widescreen: true
     smaller: true
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -27,7 +29,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 5. Make sure required libraries are installed. 
 
-- sp, rgdal, rgeos, tmap, ggplot2, RColorbrewer, classInt, raster
+- sp, rgdal, rgeos, tmap, raster
 
 ## Follow Along
 
@@ -35,9 +37,6 @@ Open one of the tutorial files in a web browser
 
 Slides
 `r-geospatial-workshop-pt3.html `
-
-Tutorial
-`r-geospatial-workshop-pt3-tutorial.html `
 
 R Code
 `scripts/r-geospatial-workshop-pt3.Rmd`
@@ -87,7 +86,7 @@ path = "/path/to/your/working_directory"
 setwd(path)
 ```
 
-# Load files from Parts I and II
+# Load some files from Parts I and II
 
 ## SF Census Tracts
 ```{r}
@@ -123,22 +122,6 @@ proj4string(sfhomes15_sp) == proj4string(tracts)
 
 ```
 
-## SF Boundary
-
-Read in the `sf_boundary.shp` file with `rGDAL`
-
-```{r}
-sfboundary <- readOGR(dsn="data", layer="sf_boundary")
-
-#transform it to match the tracts projection
-sfboundary_lonlat = spTransform(sfboundary, CRS(proj4string(tracts)))
-
-proj4string(sfboundary_lonlat) == proj4string(tracts)
-
-```
-
-
-
 # SECTION I: Raster Data in R
 
 ## Read in a Raster
@@ -163,10 +146,170 @@ plot(DEM)
 
 ## Explore the Structure
 
-Just enter the name of the raster to see a summary of its structure.
-You can view more detail in the RStudio Environment pane.
+To see a summary of the structure and content of a `RasterLayer` object,
+we can just enter the object's name.
+
 ```{r}
 DEM
+```
+You can view more detail in the RStudio Environment pane.
+
+## Explore the Structure
+
+Note that this display is formatted very similarly to the display for
+a `Spatial*DataFrame` object. There's a good amount of consistency across
+the main geospatial packages in R.
+
+```{r}
+tracts
+```
+
+## Explore the Structure
+
+A raster should really just be a matrix of data, with metadata assiging
+it the correct location on the Earth's surface, right?
+## Explore the Structure
+
+Well, here's some of the important metadata.
+
+```{r}
+DEM@extent
+DEM@crs
+DEM@ncols
+```
+
+## Explore the Structure
+
+Note that this is very similar to the metadata of a 
+`Spatial*DataFrame` object (although we get `@extent`
+and `@crs` slots for what are called `@bbox` and 
+`@proj4string` in a `Spatial*DataFrame` object).
+
+```{r}
+tracts@bbox
+tracts@proj4string
+```
+
+## Explore the Structure
+
+Also note that, because of the distinct nature of raster and vector data,
+`RasterLayer` and `Spatial*DataFrame` objects have some fundamentally different metadata.
+
+For example, a `RasterLayer` has information on the resolution.
+
+```{r}
+DEM
+```
+
+## Explore the Structure
+
+What does the resolution mean?
+
+```{r}
+(DEM@extent@xmax - DEM@extent@xmin) / DEM@ncols
+(DEM@extent@ymax - DEM@extent@ymin) / DEM@nrows
+DEM
+```
+It's the cell-size! That is, the real-world distance of the x and y sides of
+each cell (i.e. pixel) in our `RasterLayer`, expressed in the distance units
+of the object (as determined by its projection).
+
+## Explore the Structure
+
+As for our matrix of data, it should live somewhere inside the `@data` slot, right?
+(Just like our data.frame of attribute data lives in the `Spatial*DataFrame@data` slot.)
+
+```{r}
+DEM@data
+```
+
+## Explore the Structure
+
+There's a bunch of stuff there. Let's take a look at the `@data@values` slot...
+
+```{r}
+DEM@data@values
+```
+## Explore the Structure
+
+What happened there? How can our data be `logical(0)`?
+Where's our data?
+
+```{r}
+DEM@data@inmemory
+DEM@data@fromdisk
+```
+
+It appears our data was not all read into memory. Instead, our `RasterLayer` object
+contains a pointer to where that data is held on disk (to save memory).
+
+## Explore the Structure
+
+How do we see the values, then?
+
+Well, we can still subset the values, using two-dimensional subsetting notation, just
+as we'd expect for a matrix.
+
+```{r}
+DEM[10:15, 20:30]
+```
+And we'll get back a vector of the values from that subsetted matrix, unfolded.
+
+## Explore the Structure
+
+We can even subset the entire thing, getting back all of the values.
+
+```{r}
+DEM[,]
+```
+
+## Explore the Structure
+
+And we could even then turn that vector back into a matrix of the proper dimensions.
+
+```{r}
+#coerce our whole raser's dataset to a matrix, with the appropriate number
+#of columns, and 
+matrix(DEM[,], ncol = ncol(DEM), byrow = TRUE)
+```
+
+Notice that we were able to use `ncol` on our `RasterLayer` object, because in some 
+basic senses it behaves like a `matrix`, much as a `Spatial*DataFrame` behaves in some
+senses like a `data.frame`.
+
+## Explore the Structure
+
+Could we then create a new `RasterLayer` object from that matrix?
+
+```{r}
+test = raster(matrix(DEM[,], ncol = ncol(DEM), byrow = TRUE))
+test
+```
+
+We do get a new `RasterLayer`! However, notice that it of course has no
+projection, and has incorrect extent and resolution.
+
+We won't do this in the workshop, but you could imagine that you could then use
+the DEM object's information to assign the new `RasterLayer` its appropriate metadata
+(much like what we did with unprojected point data that we read in from a CSV and
+coerced to a `SpatialPointsDataFrame`). 
+
+## Explore the Structure
+
+What does the `@data@values` slot look like in our new object now?
+
+```{r}
+test@data@values
+```
+
+## Explore the Structure
+
+That makes sense, because our test object didn't come from a file, so R
+didn't leave its data on disk.
+
+```{r}
+test@data@inmemory
+test@data@fromdisk
 ```
 
 ## CRS Transformations
@@ -179,9 +322,8 @@ Transform (or reproject) the Tracts vector data to match it.
 #check out its projection
 proj4string(DEM)
 
-#reproject tracts and sfboundary to our DEM projection
+#reproject tracts to our DEM projection
 tracts_NAD = spTransform(tracts, CRS(proj4string(DEM)))
-sfboundary_NAD = spTransform(sfboundary_lonlat, CRS(proj4string(DEM)))
 ```
 
 ## CRS Transformations
@@ -228,7 +370,6 @@ plot(DEM_WGS_crop)
 plot(tracts, add = T)
 ```
 
-
 ## Let's plot these in TMAP
 
 We can make an interactivelyplot using `TMAP`
@@ -246,6 +387,17 @@ tmap_mode("view")
 ## View Map
 ```{r}
 my_map
+```
+
+## Writing Raster Data
+
+And now that we've manipulated our data as desired, we can write it to disk
+if we like!
+
+```{r}
+#write our reprojected, cropped data to the data directory, using the Geotiff format
+#(and allow R to overwrite if file already exists)
+writeRaster(DEM_WGS_crop, filename="./data/DEM_reproject_crop.tif", format="GTiff", overwrite = T)
 ```
 
 ## Extract elevation values
@@ -328,7 +480,7 @@ Can you see the difference between mapping a vector layer on top of a raster lay
 
 # SECTION II: Categorical Rasters, Reclassifying, and Spatial Analysis
 
-# Challenge section
+## Challenge section
 
 This section will feature a number of challenges, to get you practicing some of the
 material we've already covered today.
@@ -351,10 +503,10 @@ nlcd = raster('./data/nlcd2011_sf.tif')
 plot(nlcd)
 ```
 
-## Let's also take a look at a summary of the NLCD data
+## Let's see what's in the NLCD data
 
 ```{r}
-summary(nlcd)
+freq(nlcd)
 ```
 
 ## ... and a barplot
@@ -393,7 +545,7 @@ nlcd_WGS_crop = crop(nlcd_WGS, extent(tracts))
 
 ```
 
-## Reclassifying categorical rasters
+## Reclassifying rasters
 
 When we're working with a categorical raster, we'll often want to reclass our data. We may want to do this because:
 
@@ -412,8 +564,9 @@ matrix with 3 columns (low, high, to):
 ## Define reclassification matrix 
 ```{r}
 reclass_df <- c(0, 12, NA, # water will be set to NA (i.e. 'left out' of our analysis)
-                20, 30, 0, # developed and hardscape will have 0s
-                30, 32, 0, 
+                20, 21, 1, # we'll treat developed open space as greenspace, based on NLCD description
+                21, 30, 0, # developed and hardscape will have 0s
+                30, 32, NA, 
                 40, Inf, 1) # greensapce will have 1s
 reclass_df
 reclass_m <- matrix(reclass_df, ncol = 3, byrow = TRUE)
@@ -423,14 +576,32 @@ reclass_m
 ## Reclassify the raster 
 ```{r}
 nlcd_green <- reclassify(nlcd, reclass_m)
+```
 
+## Reclassify the raster
+
+What did we get?
+
+```{r}
 freq(nlcd_green)
 ```
 
 ## Reclassify the raster 
+
+What did we get?
+
 ```{r}
 barplot(nlcd_green)
 ```
+
+## Reclassify the raster 
+
+What did we get?
+
+```{r}
+plot(nlcd_green)
+```
+
 
 ## Challenge 3: Extract our NLCD data to our tract polygons
 
@@ -773,7 +944,7 @@ tracts$mean_karl = extract(mean_karl_WGS_crop, tracts, mean)
 
 ## Explore Spatial Relationships
 
-Maybe fogginess is a function of elevation? would make sense, right?
+Maybe fogginess is a function of elevation? That would make sense, right?
 
 ```{r}
 # Linear regression model
@@ -794,3 +965,11 @@ summer day. Though this only explains about 35% of the variance in our data.
 
 ## Questions?
 
+**Additional Resources**
+ https://cran.r-project.org/web/packages/raster/vignettes/Raster.pdf 
+
+ https://www.neonscience.org/raster-data-r
+
+ https://nceas.github.io/oss-lessons/spatial-data-gis-law/4-tues-spatial-analysis-in-r.html
+
+ https://geoscripting-wur.github.io/IntroToRaster/
