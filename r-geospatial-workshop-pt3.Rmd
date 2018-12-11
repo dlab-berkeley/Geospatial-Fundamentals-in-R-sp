@@ -89,6 +89,7 @@ setwd(path)
 # Load some files from Parts I and II
 
 ## SF Census Tracts
+
 ```{r}
 # Read in the 'sftracts_wpop' shapefile
 tracts = readOGR('./data', 'sftracts_wpop')
@@ -279,7 +280,7 @@ senses like a `data.frame`.
 
 ## Explore the Structure
 
-Could we then create a new `RasterLayer` object from that matrix?
+Can we create a new `RasterLayer` object from a matrix?
 
 ```{r}
 test = raster(matrix(DEM[,], ncol = ncol(DEM), byrow = TRUE))
@@ -289,14 +290,39 @@ test
 We do get a new `RasterLayer`! However, notice that it of course has no
 projection, and has incorrect extent and resolution.
 
-We won't do this in the workshop, but you could imagine that you could then use
+## Explore the Structure
+
+You can imagine that you could then use
 the DEM object's information to assign the new `RasterLayer` its appropriate metadata
 (much like what we did with unprojected point data that we read in from a CSV and
 coerced to a `SpatialPointsDataFrame`). 
 
+Because there's a much easier way to do all of this...
+
 ## Explore the Structure
 
-What does the `@data@values` slot look like in our new object now?
+Our subsetting operation can actually take a `drop = FALSE` argument!
+
+```{r}
+DEM[10:15, 20:30, drop = FALSE]
+```
+
+And this gives us back a new RasterLayer object! 
+
+In essence, this makes the subsetting operation more or less like a basic **clipping** function.
+
+## Explore the Structure
+
+Here's what that gave us:
+
+```{r}
+test = DEM[10:15, 20:30, drop = FALSE]
+plot(test)
+```
+
+## Explore the Structure
+
+And now what does the `@data@values` slot look like in our new object now?
 
 ```{r}
 test@data@values
@@ -370,12 +396,51 @@ plot(DEM_WGS_crop)
 plot(tracts, add = T)
 ```
 
-## Let's plot these in TMAP
+## Masking Raster Data
 
-We can make an interactivelyplot using `TMAP`
+Notice that the clipping (or cropping) operation reduced our dataset
+to just the extent of the census-tract dataset, but still left us with
+values outside of the census tracts themselves (because they are areas outside
+the city of San Francisco).
+
+## Masking Raster Data
+
+For some purposes, we may want to get rid of those
+values as well. 
+
+We can do this with an operation called **masking**.
 
 ```{r}
-my_map <- tm_shape(DEM_WGS_crop) +
+DEM_WGS_crop_masked = mask(DEM_WGS_crop, tracts)
+```
+
+## Masking Raster Data
+
+Here's what that gives us, compared to the unmasked object:
+
+```{r}
+DEM_WGS_crop_masked
+DEM_WGS_crop
+```
+
+Notice that this is still a rectangular grid of cells, with the same `nrow` and `ncol`
+as the unmasked object. This is, of course, because a raster will **always** be a
+rectangular grid of cells. What masking did was to set the cells that lie outside
+our dataset to NAs.
+
+## Masking Raster Data
+
+```{r}
+plot(DEM_WGS_crop_masked)
+plot(tracts, add = T)
+```
+
+## Plotting rasters in TMAP
+
+We can make an interactive plot using `TMAP`
+
+```{r}
+my_map <- tm_shape(DEM_WGS_crop_masked) +
   tm_raster() +
 tm_shape(tracts) + 
   tm_borders() +
@@ -397,8 +462,17 @@ if we like!
 ```{r}
 #write our reprojected, cropped data to the data directory, using the Geotiff format
 #(and allow R to overwrite if file already exists)
-writeRaster(DEM_WGS_crop, filename="./data/DEM_reproject_crop.tif", format="GTiff", overwrite = T)
+writeRaster(DEM_WGS_crop_masked, filename="./data/DEM_reproject_crop.tif", format="GTiff", overwrite = T)
 ```
+
+
+
+# SECTION II: Raster Operations and Spatial Analysis
+
+## Challenge section
+
+This section will feature a number of challenges, to get you practicing some of the
+material we've already covered today.
 
 ## Extract elevation values
 
@@ -478,12 +552,6 @@ head(elev)
 
 Can you see the difference between mapping a vector layer on top of a raster layer (my_map) compared to summarizing raster values by vector polygons and then mapping the polygon features (elev_map)?
 
-# SECTION II: Categorical Rasters, Reclassifying, and Spatial Analysis
-
-## Challenge section
-
-This section will feature a number of challenges, to get you practicing some of the
-material we've already covered today.
 
 ## Challenge 1: Read in and check out new data
 
@@ -492,6 +560,8 @@ You have another raster dataset in your `./data` directory. The file is called
 Read that file in as an object called `nlcd`, and plot it.
 
 ## Work in progress...
+
+Reminder: file is called `nlcd2011_sf.tif`
 
 ## Solution
 
@@ -544,6 +614,53 @@ proj4string(nlcd_WGS) == proj4string(tracts)
 nlcd_WGS_crop = crop(nlcd_WGS, extent(tracts))
 
 ```
+
+## Plot the new raster
+
+```{r}
+plot(nlcd_WGS_crop)
+```
+
+## Recovering our plot formatting
+
+Notice that the colors of our original, which conveniently represented the NLCD class
+colors from their website, are lost after reprojecting and cropping our raster.
+
+Those colors were actually all controlled by a bunch of information stored in the original
+NLCD file, which was read into the `@legend` slot of our RasterLayer object when we read that file in. Here's the information -- and note that the codes that look like '#435ae2', for example, are hexadecimal strings, a common way of representing colors in the programming world:
+
+```{r}
+nlcd@legend
+```
+
+## Recover our plot formatting
+
+What's the `@legend` slot in our reproject, cropped object look like?
+
+```{r}
+nlcd_WGS_crop@legend
+```
+
+## Recover our plot formatting
+
+Well that's a bummer...
+
+Is there a way we could transfer that information over to our reprojected, cropped raster?
+
+## Challenge 3: Transferring our `@legend` info
+Try to figure out how to transfer the `@legend` info from the original raster object to our new object. Then plot the new object to see if it worked.
+
+## Work in progress...
+
+## Solution
+
+```{r}
+nlcd_WGS_crop@legend = nlcd@legend
+plot(nlcd_WGS_crop)
+
+```
+Nice! Not necessary... but nice!
+
 
 ## Reclassifying rasters
 
@@ -602,8 +719,7 @@ What did we get?
 plot(nlcd_green)
 ```
 
-
-## Challenge 3: Extract our NLCD data to our tract polygons
+## Challenge 4: Extract our NLCD data to our tract polygons
 
 Just like we did earlier with our elevation data, let's extract our reclassed
 NLCD data to our census-tract polygons.
@@ -630,7 +746,7 @@ What's with all the NAs?
 
 Remember, we set all water cells to NA, to ignore them in our analysis.
 
-## Challenge 4: How do we get extract to ignore our NAs?
+## Challenge 5: How do we get extract to ignore our NAs?
 
 Try to run the same command again, but telling the extract function to ignore NAs.
 
@@ -729,7 +845,7 @@ sfhomes15_utm_buff = gBuffer(sfhomes15_utm, width = 100, byid = T)
 
 #sum the greenspace within the buffers 
 #NOTE: This will take a couple minutes to run...
-greenspace_homes = extract(nlcd_green_utm, sfhomes15_utm_buff, fun = sum, na.rm = T)
+greenspace_homes = extract(nlcd_green_utm, sfhomes15_utm_buff, fun = mean, na.rm = T)
 
 #add that as a column in our sfhomes15_utm dataframe
 sfhomes15_utm$greenspace = greenspace_homes

@@ -1252,7 +1252,7 @@ To make these data more useful, let's add this value to `sftracts_utm`
 
 ## 
 
-This only works because their are the same number of elements both @data slots and they are in the same order!
+This only works because there are the same number of elements in both @data slots and they are in the same order!
 ```{r}
 
 sftracts_utm$mean_totvalue <- tracts_with_mean_val$totvalue
