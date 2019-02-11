@@ -1,0 +1,3 @@
+- find and fix that one bug
+- install the remaining packages (run instlal.packages('tmap') and the other ones again)
+- replace/change the ggmap section?

@@ -3,6 +3,8 @@ title: "Geospatial Data in R, pt1"
 author: "Drew Hart & Patty Frontiera"
 date: "Fall 2018"
 output:  ioslides_presentation
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -479,12 +481,13 @@ ggplot() +
 # ggmap
 
 ## `ggmap` extends `ggplot`
+It allows you to:
 
-Create basemaps on which you can display your data.
+- Create _basemaps_ on which you can display your data.
 
-Use the `Google Geocoding API` to get coordinates for place names and addresses
+- Use the `Google Geocoding API` to get coordinates for place names and addresses (i.e. to _'geocode'_)
 
-and more...
+- and more...
 
 ## ggmap
 
@@ -493,32 +496,35 @@ Load the libary
 library(ggmap)
 ```
 
-## ggmap and Google
+## A note on the recent change in `ggmap` authorization
 
 Some `ggmap` functionality may require you to register a Google API key
 
 Beginning July 2018 Google requires a credit card on file to access online APIs
 
-So, we won't call Google APIs in this tutorial.
+The setup of an API key is beyond the scope of this workshop. So, we we'll only call Google APIs as a demo in this tutorial. This way, at least you can still see what's available to you.
 
-This set up is beyound the scope of this workshop but we want you to know its there if you want to use the Google Geocoder which is excellent.
 
-## `ggmap`
+## A note on `ggmap` installation and usage
 
-If you have problems with `ggmap` you may need to reinstall the library from github.
+If you happen to already have a configured Google Maps API key (with Geocoding, Geolocation, and Static Maps APIs all enabled), then you are welcome to try this on your machine by running:
 
-- See this [StackOverflow discussion](https://stackoverflow.com/questions/34402979/increase-the-api-limit-in-ggmaps-geocode-function-in-r)
+  `register_google(<YOUR_API_KEY_HERE>)`
 
-Alternatively, just follow along without trying while we demo!
+(If you have problems with `ggmap` you may need to reinstall the library from github.
+
+- See this [StackOverflow discussion](https://stackoverflow.com/questions/34402979/increase-the-api-limit-in-ggmaps-geocode-function-in-r))
+
+Otherwise, just watch for the next few steps!
+
 
 ```{r, eval=F}
 #devtools::install_github("dkahle/ggmap")
-#library(ggmap)
+library(ggmap)
 ```
 
 ##  get_map
-
-`ggmap` uses the `get_map` function to fetch map tiles to display in your map.
+Let's check out the `get_map` function. This will allow us to fetch map tiles to display in our maps.
 
 `get_map` uses a number of online mapping services including `Google`, `Stamen` and `OpenStreetMap (OSM)`
 
@@ -533,9 +539,19 @@ Let's fetch a simple map on which we can display our points
 
 Here we are centering the map on San Francisco & using the stamen `toner-lite` basemap.
 
+
+```{r, eval=FALSE}
+#Load my API key from file
+#(NOTE: THIS WON'T RUN ON OTHERS' MACHINES!)
+filename = '/home/drew/Desktop/gmapi.txt'
+register_google(gsub('\n', '', readChar(filename, file.info(filename)$size)))
+```
+
+
 ```{r, warning=FALSE}
 sf_center_point <- c(lon=-122.445144, lat=37.769335 )
-sf_map <- get_map(sf_center_point, source="stamen", maptype="toner-lite")  
+
+sf_map <- get_map(sf_center_point)  
 ```
 
 ## Use `ggmap` to display the map
@@ -598,32 +614,6 @@ ggmap(sf_basemap) +
    geom_point(data=sfhomes, aes(x=lon, y=lat, col=totvalue))
 ```
 
-## Challenge
-
-Create a `ggmap` that uses the customized `sf_basemap`
-
-- overlay the `sfhomes` data for `2015
-
-- color code the points by `totvalue`
-
-## Challenge
-
-```{r, results = "hide"}
-# FIRST - subset the data
-sfhomes15 <- subset(sfhomes, as.numeric(SalesYear) == 2015)
-#
-sfhomes15_map <- ggmap(sf_basemap) +
-  geom_point(data=sfhomes15, aes(x=lon, y=lat, col=totvalue))
-```
-
-## Challenge
-
-Display the results
-
-```{r}
-sfhomes15_map
-```
-
 
 ## Map Overlays
 
@@ -642,6 +632,15 @@ bart <- read.csv("./data/bart.csv")
 head (bart)
 ```
 
+## Subset for year 2015
+For the maps from here on out, to deal with a smaller example dataset, we're going to also subset our data
+for only those rows that pertain to year 2015.
+
+```{r}
+sfhomes15 <- subset(sfhomes, as.numeric(SalesYear) == 2015)
+```
+
+
 ## Add BART stations to map
 ```{r, results="hide"}
 sfmap_with_bart <- ggmap(sf_basemap) +
@@ -656,6 +655,11 @@ sfmap_with_bart
 ```
 
 # Questions?
+
+That's all we'll do with `ggmap` maps for now, since you're probably not able to run the code yourself on your own computer. 
+
+But we'll get a quick glimpse of ggmap's geocoding functionality toward the end of today's material.
+
 
 ## Let's add one more layer
 
@@ -672,10 +676,10 @@ head(landmarks)
 
 ## Map Landmarks
 
-Create a map of the SF homes, BART Stations and Landmarks on top of the basemap.
+Let's create a map of the SF homes, BART Stations and Landmarks all together.
 
 ```{r, results = "hide"}
-sfmap_bart_landmarks <- ggmap(sf_basemap) +
+sfmap_bart_landmarks <- ggplot() +
   geom_point(data=sfhomes15, aes(x=lon, y=lat))  +
   geom_point(data=bart, aes(x=X,y=Y), col="red", size=3) +
   geom_point(data=landmarks, aes(x=X,y=Y), shape=22, 
@@ -817,7 +821,7 @@ class(sfhomes15_sp)  # check the class of the object
 
 ```{r}
 
-sfhomes15_sp <- sfhomes15  # Make a copy - why?
+sfhomes15_sp <- sfhomes  # Make a copy - why?
 
 class(sfhomes15_sp)  # check the class of the object
 
@@ -1369,6 +1373,41 @@ plot(sfboundary_lonlat)
 points(sfhomes15_sp, col="red")
 points(landmarks_lonlat, col="green")
 ```
+
+
+## Quick aside: Geocoding with `ggmap`
+Note: Now that we've transformed our landmarks' coordinates to geographic coordinates, let's see how to get geocoded coordinates from `gmap`, to see how the results compare:
+
+```{r}
+#prep our names for geocoding with the Google Maps API
+place_names = paste0(landmarks@data$name, ',  San Francisco, CA')
+#geocode them
+geocode_coords = geocode(place_names)
+```
+
+## Quick aside: Geocoding with `ggmap`
+
+```{r}
+#transformed coords
+landmarks_lonlat@coords
+#geocoded coords
+geocode_coords
+```
+
+## Quick aside: Geocoding with `ggmap`
+Nice! But why so little precision?
+
+There are actually more significant digits. They're just truncated by R's display.
+
+## Quick aside: Geocoding with `ggmap`
+
+```{r}
+#transformed coords
+landmarks_lonlat@coords
+#geocoded coords
+cbind(geocode_coords$lon, geocode_coords$lat)
+```
+
 
 ## Challenge 
 1. Use `readOGR` to load the shapefile "data/sf_highways.shp"

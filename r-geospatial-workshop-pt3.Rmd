@@ -581,6 +581,9 @@ freq(nlcd)
 
 ## ... and a barplot
 
+(Please note that the colors in this barplot have no relations to the colors used to plot our raster! Pay attention
+instead to the numbered categories along the x-axis, instead.)
+
 ```{r}
 barplot(nlcd)
 ```
@@ -878,7 +881,7 @@ summary(mod)
 
 Mehhh... Some signal for elevation, but very low R^2.
 
-Neat analysis though!
+Hopefully it's a demonstrative analysis though!
 
 
 ## Questions?
@@ -1077,7 +1080,7 @@ summary(mod)
 Neat! Census-tract mean elevation has a significant, positive effect on
 mean fogginess (with each meter increase in elevation causing on average
 a .011 hour, or about 39-second increase in time spent in fog on an average
-summer day. Though this only explains about 35% of the variance in our data.
+summer day. Though this only explains about 4% of the variance in our data!
 
 ## Questions?
 
