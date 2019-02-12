@@ -1296,7 +1296,7 @@ See `?writeOGR` for help
 # write transformed data to a new shapefile 
 writeOGR(sfboundary_lonlat, 
           dsn = "data", 
-          layer = "sfbounary_lonlat", 
+          layer = "sfboundary_lonlat", 
           driver="ESRI Shapefile")
 
 # is it there?
